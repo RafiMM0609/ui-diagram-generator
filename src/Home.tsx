@@ -66,6 +66,36 @@ function FlowCanvas() {
 
   return (
     <div style={{ height: '100vh', width: '100vw', position: 'relative' }}>
+      <style>{`
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.5; }
+        }
+        @keyframes pulseButton {
+          0%, 100% {
+            box-shadow: 0 4px 12px rgba(0,123,255,0.4);
+            transform: scale(1);
+          }
+          50% {
+            box-shadow: 0 4px 20px rgba(0,123,255,0.6);
+            transform: scale(1.05);
+          }
+        }
+        @keyframes slideUp {
+          from {
+            opacity: 0;
+            transform: translateY(10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+      `}</style>
       {!isLoading ? (
         <div style={{ height: '100%', width: '100%' }}>
           <ReactFlow
@@ -103,16 +133,6 @@ function FlowCanvas() {
           }}>
             Generating your diagram...
           </p>
-          <style>{`
-            @keyframes spin {
-              0% { transform: rotate(0deg); }
-              100% { transform: rotate(360deg); }
-            }
-            @keyframes pulse {
-              0%, 100% { opacity: 1; }
-              50% { opacity: 0.5; }
-            }
-          `}</style>
         </div>
       )}
       {showBubble && (
@@ -192,18 +212,6 @@ function FlowCanvas() {
               </span>
             ) : "Generate Diagram"}
           </button>
-          <style>{`
-            @keyframes slideUp {
-              from {
-                opacity: 0;
-                transform: translateY(10px);
-              }
-              to {
-                opacity: 1;
-                transform: translateY(0);
-              }
-            }
-          `}</style>
         </div>
       )}
       <div 
@@ -225,7 +233,7 @@ function FlowCanvas() {
           zIndex: 1001,
           fontSize: '24px',
           transition: 'all 0.3s ease',
-          animation: showBubble ? 'none' : 'pulse 2s ease-in-out infinite'
+          animation: showBubble ? 'none' : 'pulseButton 2s ease-in-out infinite'
         }}
         onMouseEnter={(e) => {
           e.currentTarget.style.transform = 'scale(1.1) rotate(15deg)';
@@ -237,18 +245,6 @@ function FlowCanvas() {
         }}
       >
         💬
-        <style>{`
-          @keyframes pulse {
-            0%, 100% {
-              box-shadow: 0 4px 12px rgba(0,123,255,0.4);
-              transform: scale(1);
-            }
-            50% {
-              box-shadow: 0 4px 20px rgba(0,123,255,0.6);
-              transform: scale(1.05);
-            }
-          }
-        `}</style>
       </div>
     </div>
   );
