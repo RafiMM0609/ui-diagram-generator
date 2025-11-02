@@ -1,5 +1,5 @@
 // components/FlowCanvas.jsx
-import React, { useState } from 'react';
+import { useState } from 'react';
 import ReactFlow, { useNodesState, useEdgesState, type Node, type Edge } from 'reactflow';
 import 'reactflow/dist/style.css';
 // import axios from 'axios'; // Untuk memanggil backend
