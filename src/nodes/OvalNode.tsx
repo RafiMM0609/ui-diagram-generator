@@ -7,8 +7,8 @@ function OvalNode({ data }: NodeProps) {
       <Handle type="target" position={Position.Top} />
       <div
         style={{
-          width: '140px',
-          height: '80px',
+          width: '120px',
+          height: '50px',
           background: '#fff',
           border: '2px solid #555',
           borderRadius: '50%',
