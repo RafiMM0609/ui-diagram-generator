@@ -45,14 +45,16 @@ const initialEdges: Edge[] = [
     source: '1', 
     target: '2', 
     type: 'custom',
-    style: { stroke: '#333', strokeWidth: 2 }
+    style: { stroke: '#4a90e2', strokeWidth: 2 },
+    animated: true
   },
   { 
     id: 'e2-3', 
     source: '2', 
     target: '3', 
     type: 'custom',
-    style: { stroke: '#333', strokeWidth: 2 }
+    style: { stroke: '#4a90e2', strokeWidth: 2 },
+    animated: true
   },
   { 
     id: 'e3-4', 
@@ -60,7 +62,8 @@ const initialEdges: Edge[] = [
     target: '4', 
     type: 'custom', 
     label: 'Yes',
-    style: { stroke: '#333', strokeWidth: 2 }
+    style: { stroke: '#4a90e2', strokeWidth: 2 },
+    animated: true
   },
   { 
     id: 'e3-5', 
@@ -68,21 +71,24 @@ const initialEdges: Edge[] = [
     target: '5', 
     type: 'custom', 
     label: 'No',
-    style: { stroke: '#333', strokeWidth: 2 }
+    style: { stroke: '#4a90e2', strokeWidth: 2 },
+    animated: true
   },
   { 
     id: 'e4-6', 
     source: '4', 
     target: '6', 
     type: 'custom',
-    style: { stroke: '#333', strokeWidth: 2 }
+    style: { stroke: '#4a90e2', strokeWidth: 2 },
+    animated: true
   },
   { 
     id: 'e5-6', 
     source: '5', 
     target: '6', 
     type: 'custom',
-    style: { stroke: '#333', strokeWidth: 2 }
+    style: { stroke: '#4a90e2', strokeWidth: 2 },
+    animated: true
   },
 ];
 
@@ -117,11 +123,12 @@ function FlowCanvas() {
     custom: CustomEdge,
   }), []);
 
-  // Default edge styles for better visibility
+  // Default edge styles for better visibility with animation
   const defaultEdgeOptions = useMemo(() => ({
     type: 'custom',
+    animated: true,
     style: {
-      stroke: '#333',
+      stroke: '#4a90e2',
       strokeWidth: 2,
     },
   }), []);
@@ -131,8 +138,9 @@ function FlowCanvas() {
     (params: Connection) => setEdges((eds) => addEdge({ 
       ...params, 
       type: 'custom',
+      animated: true,
       style: {
-        stroke: '#333',
+        stroke: '#4a90e2',
         strokeWidth: 2,
       },
     }, eds)),
@@ -640,37 +648,101 @@ function FlowCanvas() {
             <MiniMap />
             <Background gap={12} size={1} />
           </ReactFlow>
-          {/* Node Type Selector and Add Node Button */}
+          {/* Left Sidebar with Draggable Node Types */}
           <div
             style={{
               position: 'absolute',
-              top: '20px',
-              left: '20px',
-              display: 'flex',
-              gap: '10px',
-              alignItems: 'center',
+              top: '0',
+              left: '0',
+              width: '240px',
+              height: '100%',
+              backgroundColor: '#f8f9fa',
+              borderRight: '2px solid #e0e0e0',
+              padding: '20px',
+              boxShadow: '2px 0 8px rgba(0,0,0,0.1)',
               zIndex: 5,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '15px',
+              overflowY: 'auto',
             }}
           >
-            <select
-              value={selectedNodeType}
-              onChange={(e) => setSelectedNodeType(e.target.value)}
+            <h3 style={{ margin: '0 0 10px 0', fontSize: '16px', fontWeight: '600', color: '#333' }}>
+              Node Types
+            </h3>
+            <p style={{ margin: '0 0 15px 0', fontSize: '12px', color: '#666' }}>
+              Click to select, then add to canvas
+            </p>
+            
+            {/* Rectangle Node */}
+            <div
+              onClick={() => setSelectedNodeType('default')}
               style={{
-                backgroundColor: 'white',
-                border: '1px solid #ddd',
+                padding: '12px',
+                backgroundColor: selectedNodeType === 'default' ? '#e3f2fd' : 'white',
+                border: selectedNodeType === 'default' ? '2px solid #2196f3' : '2px solid #ddd',
                 borderRadius: '8px',
-                padding: '10px 15px',
                 cursor: 'pointer',
-                fontSize: '14px',
-                fontWeight: '500',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                transition: 'all 0.2s',
+                boxShadow: selectedNodeType === 'default' ? '0 4px 8px rgba(33, 150, 243, 0.2)' : '0 2px 4px rgba(0,0,0,0.1)',
               }}
             >
-              <option value="default">Rectangle</option>
-              <option value="diamond">Diamond</option>
-              <option value="oval">Oval</option>
-              <option value="circle">Circle</option>
-            </select>
+              <div style={{ fontSize: '14px', fontWeight: '500', marginBottom: '5px' }}>📦 Rectangle</div>
+              <div style={{ fontSize: '11px', color: '#666' }}>For processes</div>
+            </div>
+
+            {/* Diamond Node */}
+            <div
+              onClick={() => setSelectedNodeType('diamond')}
+              style={{
+                padding: '12px',
+                backgroundColor: selectedNodeType === 'diamond' ? '#e3f2fd' : 'white',
+                border: selectedNodeType === 'diamond' ? '2px solid #4a90e2' : '2px solid #ddd',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                boxShadow: selectedNodeType === 'diamond' ? '0 4px 8px rgba(74, 144, 226, 0.2)' : '0 2px 4px rgba(0,0,0,0.1)',
+              }}
+            >
+              <div style={{ fontSize: '14px', fontWeight: '500', marginBottom: '5px' }}>🔷 Diamond</div>
+              <div style={{ fontSize: '11px', color: '#666' }}>For decisions</div>
+            </div>
+
+            {/* Oval Node */}
+            <div
+              onClick={() => setSelectedNodeType('oval')}
+              style={{
+                padding: '12px',
+                backgroundColor: selectedNodeType === 'oval' ? '#e8f5e9' : 'white',
+                border: selectedNodeType === 'oval' ? '2px solid #28a745' : '2px solid #ddd',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                boxShadow: selectedNodeType === 'oval' ? '0 4px 8px rgba(40, 167, 69, 0.2)' : '0 2px 4px rgba(0,0,0,0.1)',
+              }}
+            >
+              <div style={{ fontSize: '14px', fontWeight: '500', marginBottom: '5px' }}>⭕ Oval</div>
+              <div style={{ fontSize: '11px', color: '#666' }}>For start/end</div>
+            </div>
+
+            {/* Circle Node */}
+            <div
+              onClick={() => setSelectedNodeType('circle')}
+              style={{
+                padding: '12px',
+                backgroundColor: selectedNodeType === 'circle' ? '#fff3e0' : 'white',
+                border: selectedNodeType === 'circle' ? '2px solid #ffc107' : '2px solid #ddd',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                boxShadow: selectedNodeType === 'circle' ? '0 4px 8px rgba(255, 193, 7, 0.2)' : '0 2px 4px rgba(0,0,0,0.1)',
+              }}
+            >
+              <div style={{ fontSize: '14px', fontWeight: '500', marginBottom: '5px' }}>⚫ Circle</div>
+              <div style={{ fontSize: '11px', color: '#666' }}>For connectors</div>
+            </div>
+
+            {/* Add Node Button */}
             <button
               onClick={addNode}
               style={{
@@ -678,16 +750,17 @@ function FlowCanvas() {
                 color: 'white',
                 border: 'none',
                 borderRadius: '8px',
-                padding: '10px 20px',
+                padding: '12px 20px',
                 cursor: 'pointer',
                 fontSize: '14px',
-                fontWeight: '500',
+                fontWeight: '600',
                 boxShadow: '0 2px 8px rgba(40,167,69,0.3)',
                 transition: 'all 0.3s ease',
+                marginTop: '10px',
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.backgroundColor = '#218838';
-                e.currentTarget.style.transform = 'translateY(-1px)';
+                e.currentTarget.style.transform = 'translateY(-2px)';
                 e.currentTarget.style.boxShadow = '0 4px 12px rgba(40,167,69,0.4)';
               }}
               onMouseLeave={(e) => {
@@ -696,8 +769,27 @@ function FlowCanvas() {
                 e.currentTarget.style.boxShadow = '0 2px 8px rgba(40,167,69,0.3)';
               }}
             >
-              ➕ Add Node
+              ➕ Add to Canvas
             </button>
+
+            <div style={{ borderTop: '1px solid #ddd', margin: '10px 0' }}></div>
+
+            <h3 style={{ margin: '0 0 10px 0', fontSize: '16px', fontWeight: '600', color: '#333' }}>
+              Export Options
+            </h3>
+          </div>
+          {/* Top Export Buttons */}
+          <div
+            style={{
+              position: 'absolute',
+              top: '20px',
+              left: '260px',
+              display: 'flex',
+              gap: '10px',
+              alignItems: 'center',
+              zIndex: 5,
+            }}
+          >
             <button
               onClick={exportToPDF}
               style={{
