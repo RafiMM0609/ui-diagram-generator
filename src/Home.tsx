@@ -1,5 +1,5 @@
 // FlowCanvas Component - Interactive diagram editor with node creation, editing, and connection capabilities
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import ReactFlow, { 
   useNodesState, 
   useEdgesState, 
@@ -52,6 +52,7 @@ function FlowCanvas() {
   const [editingNodeType, setEditingNodeType] = useState<string>('default');
   const [editingEdgeId, setEditingEdgeId] = useState<string | null>(null);
   const [editingEdgeLabel, setEditingEdgeLabel] = useState("");
+  const [selectedNodes, setSelectedNodes] = useState<Node[]>([]);
 
   // Define custom node types
   const nodeTypes = useMemo(() => ({
@@ -155,6 +156,51 @@ function FlowCanvas() {
     setEditingEdgeLabel("");
   }, []);
 
+  // Delete selected nodes
+  const deleteSelectedNodes = useCallback(() => {
+    if (selectedNodes.length > 0) {
+      const nodeIdsToDelete = selectedNodes.map(node => node.id);
+      setNodes((nds) => nds.filter((node) => !nodeIdsToDelete.includes(node.id)));
+      // Also remove edges connected to deleted nodes
+      setEdges((eds) => eds.filter((edge) => 
+        !nodeIdsToDelete.includes(edge.source) && !nodeIdsToDelete.includes(edge.target)
+      ));
+      setSelectedNodes([]);
+    }
+  }, [selectedNodes, setNodes, setEdges]);
+
+  // Delete a specific node (for use in the edit modal)
+  const deleteNode = useCallback((nodeId: string) => {
+    setNodes((nds) => nds.filter((node) => node.id !== nodeId));
+    // Also remove edges connected to the deleted node
+    setEdges((eds) => eds.filter((edge) => 
+      edge.source !== nodeId && edge.target !== nodeId
+    ));
+    setEditingNodeId(null);
+    setEditingLabel("");
+    setEditingNodeType('default');
+  }, [setNodes, setEdges]);
+
+  // Handle keyboard events for deletion
+  const onKeyDown = useCallback((event: KeyboardEvent) => {
+    if ((event.key === 'Delete' || event.key === 'Backspace') && !editingNodeId && !editingEdgeId) {
+      deleteSelectedNodes();
+    }
+  }, [deleteSelectedNodes, editingNodeId, editingEdgeId]);
+
+  // Track selected nodes
+  const onSelectionChange = useCallback(({ nodes }: { nodes: Node[] }) => {
+    setSelectedNodes(nodes);
+  }, []);
+
+  // Set up keyboard event listener
+  useEffect(() => {
+    window.addEventListener('keydown', onKeyDown);
+    return () => {
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, [onKeyDown]);
+
   // INI ADALAH FUNGSI KUNCINYA
   const handleGenerateFlow = async () => {
     setIsLoading(true);
@@ -233,6 +279,7 @@ function FlowCanvas() {
             onConnect={onConnect}
             onNodeDoubleClick={onNodeDoubleClick}
             onEdgeDoubleClick={onEdgeDoubleClick}
+            onSelectionChange={onSelectionChange}
             nodeTypes={nodeTypes}
             edgeTypes={edgeTypes}
             fitView
@@ -315,7 +362,7 @@ function FlowCanvas() {
               zIndex: 5,
             }}
           >
-            💡 Double-click a node/edge to edit • Drag to connect nodes
+            💡 Double-click a node/edge to edit • Drag to connect nodes • Select and press Delete to remove nodes
           </div>
         </div>
       ) : (
@@ -420,6 +467,27 @@ function FlowCanvas() {
               </select>
             </div>
             <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => deleteNode(editingNodeId)}
+                style={{
+                  backgroundColor: '#dc3545',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  padding: '8px 16px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#c82333';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = '#dc3545';
+                }}
+              >
+                Delete
+              </button>
+              <div style={{ flex: 1 }}></div>
               <button
                 onClick={cancelEdit}
                 style={{
