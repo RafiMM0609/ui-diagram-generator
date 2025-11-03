@@ -1,5 +1,5 @@
 // FlowCanvas Component - Interactive diagram editor with node creation, editing, and connection capabilities
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import ReactFlow, { 
   useNodesState, 
   useEdgesState, 
@@ -9,8 +9,13 @@ import ReactFlow, {
   MiniMap,
   type Node, 
   type Edge,
-  type Connection
+  type Connection,
+  useReactFlow,
+  getNodesBounds,
+  getViewportForBounds
 } from 'reactflow';
+import { toPng } from 'html-to-image';
+import { jsPDF } from 'jspdf';
 import 'reactflow/dist/style.css';
 import DiamondNode from './nodes/DiamondNode';
 import OvalNode from './nodes/OvalNode';
@@ -53,6 +58,8 @@ function FlowCanvas() {
   const [editingEdgeId, setEditingEdgeId] = useState<string | null>(null);
   const [editingEdgeLabel, setEditingEdgeLabel] = useState("");
   const [selectedNodes, setSelectedNodes] = useState<Node[]>([]);
+  const reactFlowWrapper = useRef<HTMLDivElement>(null);
+  const { getNodes } = useReactFlow();
 
   // Define custom node types
   const nodeTypes = useMemo(() => ({
@@ -201,6 +208,53 @@ function FlowCanvas() {
     };
   }, [onKeyDown]);
 
+  // Export canvas to PDF
+  const exportToPDF = useCallback(async () => {
+    const nodesBounds = getNodesBounds(getNodes());
+    const viewportWidth = 1024;
+    const viewportHeight = 768;
+    
+    const viewport = getViewportForBounds(
+      nodesBounds,
+      viewportWidth,
+      viewportHeight,
+      0.5,
+      2,
+      0.2
+    );
+
+    if (reactFlowWrapper.current) {
+      try {
+        const dataUrl = await toPng(reactFlowWrapper.current, {
+          backgroundColor: '#ffffff',
+          width: viewportWidth,
+          height: viewportHeight,
+          style: {
+            width: `${viewportWidth}px`,
+            height: `${viewportHeight}px`,
+            transform: `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.zoom})`,
+          },
+        });
+
+        const pdf = new jsPDF({
+          orientation: viewportWidth > viewportHeight ? 'landscape' : 'portrait',
+          unit: 'px',
+          format: [viewportWidth, viewportHeight],
+        });
+
+        const img = new Image();
+        img.src = dataUrl;
+        img.onload = () => {
+          pdf.addImage(dataUrl, 'PNG', 0, 0, viewportWidth, viewportHeight);
+          pdf.save('diagram.pdf');
+        };
+      } catch (error) {
+        console.error('Error exporting to PDF:', error);
+        alert('Failed to export diagram to PDF. Please try again.');
+      }
+    }
+  }, [getNodes]);
+
   // INI ADALAH FUNGSI KUNCINYA
   const handleGenerateFlow = async () => {
     setIsLoading(true);
@@ -270,7 +324,7 @@ function FlowCanvas() {
         }
       `}</style>
       {!isLoading ? (
-        <div style={{ height: '100%', width: '100%' }}>
+        <div ref={reactFlowWrapper} style={{ height: '100%', width: '100%' }}>
           <ReactFlow
             nodes={nodes}
             edges={edges}
@@ -345,6 +399,33 @@ function FlowCanvas() {
               }}
             >
               ➕ Add Node
+            </button>
+            <button
+              onClick={exportToPDF}
+              style={{
+                backgroundColor: '#dc3545',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '10px 20px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: '500',
+                boxShadow: '0 2px 8px rgba(220,53,69,0.3)',
+                transition: 'all 0.3s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#c82333';
+                e.currentTarget.style.transform = 'translateY(-1px)';
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(220,53,69,0.4)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#dc3545';
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 2px 8px rgba(220,53,69,0.3)';
+              }}
+            >
+              📄 Export PDF
             </button>
           </div>
           {/* Instructions */}
