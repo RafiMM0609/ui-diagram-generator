@@ -247,8 +247,9 @@ function FlowCanvas() {
         cacheBust: true, // Prevent caching issues
         filter: (node) => {
           // Exclude controls, minimap, and other UI elements from export
+          if (!node.classList) return true;
           const exclusionClasses = ['react-flow__controls', 'react-flow__minimap', 'react-flow__background'];
-          return !exclusionClasses.some(classname => node.classList?.contains(classname));
+          return !exclusionClasses.some(classname => node.classList.contains(classname));
         },
       });
 
