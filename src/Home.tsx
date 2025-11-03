@@ -1,4 +1,4 @@
-// components/FlowCanvas.jsx
+// FlowCanvas Component - Interactive diagram editor with node creation, editing, and connection capabilities
 import { useState, useCallback } from 'react';
 import ReactFlow, { 
   useNodesState, 
@@ -12,6 +12,10 @@ import ReactFlow, {
   type Connection
 } from 'reactflow';
 import 'reactflow/dist/style.css';
+
+// Constants for node positioning
+const NODE_POSITION_RANGE = 400;
+const NODE_POSITION_OFFSET = 100;
 // import axios from 'axios'; // Untuk memanggil backend
 
 const initialNodes: Node[] = [
@@ -37,7 +41,7 @@ function FlowCanvas() {
   const [prompt, setPrompt] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showBubble, setShowBubble] = useState(false);
-  const [nodeIdCounter, setNodeIdCounter] = useState(7); // Start from 7 since we have 6 initial nodes
+  const [nodeIdCounter, setNodeIdCounter] = useState(initialNodes.length + 1);
   const [editingNodeId, setEditingNodeId] = useState<string | null>(null);
   const [editingLabel, setEditingLabel] = useState("");
 
@@ -53,8 +57,8 @@ function FlowCanvas() {
       id: nodeIdCounter.toString(),
       type: 'default',
       position: { 
-        x: Math.random() * 400 + 100, 
-        y: Math.random() * 400 + 100 
+        x: Math.random() * NODE_POSITION_RANGE + NODE_POSITION_OFFSET, 
+        y: Math.random() * NODE_POSITION_RANGE + NODE_POSITION_OFFSET 
       },
       data: { label: `Node ${nodeIdCounter}` },
     };
