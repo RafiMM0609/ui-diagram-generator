@@ -15,6 +15,7 @@ import 'reactflow/dist/style.css';
 import DiamondNode from './nodes/DiamondNode';
 import OvalNode from './nodes/OvalNode';
 import CircleNode from './nodes/CircleNode';
+import CustomEdge from './edges/CustomEdge';
 
 // Constants for node positioning
 const NODE_POSITION_RANGE = 400;
@@ -30,12 +31,12 @@ const initialNodes: Node[] = [
   { id: '6', type: 'default', position: { x: 250, y: 450 }, data: { label: 'End' } },
 ];
 const initialEdges: Edge[] = [
-  { id: 'e1-2', source: '1', target: '2' },
-  { id: 'e2-3', source: '2', target: '3' },
-  { id: 'e3-4', source: '3', target: '4' },
-  { id: 'e3-5', source: '3', target: '5' },
-  { id: 'e4-6', source: '4', target: '6' },
-  { id: 'e5-6', source: '5', target: '6' },
+  { id: 'e1-2', source: '1', target: '2', type: 'custom' },
+  { id: 'e2-3', source: '2', target: '3', type: 'custom' },
+  { id: 'e3-4', source: '3', target: '4', type: 'custom' },
+  { id: 'e3-5', source: '3', target: '5', type: 'custom' },
+  { id: 'e4-6', source: '4', target: '6', type: 'custom' },
+  { id: 'e5-6', source: '5', target: '6', type: 'custom' },
 ];
 
 function FlowCanvas() {
@@ -59,9 +60,14 @@ function FlowCanvas() {
     circle: CircleNode,
   }), []);
 
+  // Define custom edge types
+  const edgeTypes = useMemo(() => ({
+    custom: CustomEdge,
+  }), []);
+
   // Handle connecting nodes
   const onConnect = useCallback(
-    (params: Connection) => setEdges((eds) => addEdge({ ...params, label: '' }, eds)),
+    (params: Connection) => setEdges((eds) => addEdge({ ...params, type: 'custom' }, eds)),
     [setEdges]
   );
 
@@ -228,6 +234,7 @@ function FlowCanvas() {
             onNodeDoubleClick={onNodeDoubleClick}
             onEdgeDoubleClick={onEdgeDoubleClick}
             nodeTypes={nodeTypes}
+            edgeTypes={edgeTypes}
             fitView
           >
             <Controls />
@@ -468,13 +475,16 @@ function FlowCanvas() {
               borderRadius: '12px',
               padding: '25px',
               boxShadow: '0 10px 40px rgba(0,0,0,0.3)',
-              minWidth: '300px',
+              minWidth: '350px',
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 style={{ marginTop: 0, marginBottom: '15px', fontSize: '18px' }}>
+            <h3 style={{ marginTop: 0, marginBottom: '8px', fontSize: '18px', fontWeight: '600' }}>
               Edit Edge Label
             </h3>
+            <p style={{ margin: '0 0 15px 0', fontSize: '13px', color: '#666' }}>
+              Add a descriptive label to this connection (e.g., "Yes", "No", "Next")
+            </p>
             <input
               type="text"
               value={editingEdgeLabel}
@@ -483,26 +493,42 @@ function FlowCanvas() {
               autoFocus
               style={{
                 width: '100%',
-                padding: '10px',
+                padding: '12px',
                 fontSize: '14px',
-                border: '1px solid #ddd',
-                borderRadius: '6px',
+                border: '2px solid #e0e0e0',
+                borderRadius: '8px',
                 marginBottom: '15px',
                 boxSizing: 'border-box',
+                outline: 'none',
+                transition: 'border-color 0.2s',
               }}
-              placeholder="Enter edge label"
+              placeholder="e.g., Yes, No, Next..."
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = '#007bff';
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = '#e0e0e0';
+              }}
             />
             <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
               <button
                 onClick={cancelEdgeEdit}
                 style={{
-                  backgroundColor: '#6c757d',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  padding: '8px 16px',
+                  backgroundColor: '#f5f5f5',
+                  color: '#333',
+                  border: '1px solid #ddd',
+                  borderRadius: '8px',
+                  padding: '10px 20px',
                   cursor: 'pointer',
                   fontSize: '14px',
+                  fontWeight: '500',
+                  transition: 'all 0.2s',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#e8e8e8';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = '#f5f5f5';
                 }}
               >
                 Cancel
@@ -513,13 +539,21 @@ function FlowCanvas() {
                   backgroundColor: '#007bff',
                   color: 'white',
                   border: 'none',
-                  borderRadius: '6px',
-                  padding: '8px 16px',
+                  borderRadius: '8px',
+                  padding: '10px 20px',
                   cursor: 'pointer',
                   fontSize: '14px',
+                  fontWeight: '500',
+                  transition: 'all 0.2s',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#0056b3';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = '#007bff';
                 }}
               >
-                Save
+                Save Label
               </button>
             </div>
           </div>
