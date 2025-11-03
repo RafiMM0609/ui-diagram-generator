@@ -1,5 +1,5 @@
 // FlowCanvas Component - Interactive diagram editor with node creation, editing, and connection capabilities
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import ReactFlow, { 
   useNodesState, 
   useEdgesState, 
@@ -9,8 +9,13 @@ import ReactFlow, {
   MiniMap,
   type Node, 
   type Edge,
-  type Connection
+  type Connection,
+  useReactFlow,
+  getNodesBounds,
+  getViewportForBounds
 } from 'reactflow';
+import { toPng } from 'html-to-image';
+import { jsPDF } from 'jspdf';
 import 'reactflow/dist/style.css';
 import DiamondNode from './nodes/DiamondNode';
 import OvalNode from './nodes/OvalNode';
@@ -52,6 +57,9 @@ function FlowCanvas() {
   const [editingNodeType, setEditingNodeType] = useState<string>('default');
   const [editingEdgeId, setEditingEdgeId] = useState<string | null>(null);
   const [editingEdgeLabel, setEditingEdgeLabel] = useState("");
+  const [selectedNodes, setSelectedNodes] = useState<Node[]>([]);
+  const reactFlowWrapper = useRef<HTMLDivElement>(null);
+  const { getNodes } = useReactFlow();
 
   // Define custom node types
   const nodeTypes = useMemo(() => ({
@@ -155,6 +163,98 @@ function FlowCanvas() {
     setEditingEdgeLabel("");
   }, []);
 
+  // Delete selected nodes
+  const deleteSelectedNodes = useCallback(() => {
+    if (selectedNodes.length > 0) {
+      const nodeIdsToDelete = selectedNodes.map(node => node.id);
+      setNodes((nds) => nds.filter((node) => !nodeIdsToDelete.includes(node.id)));
+      // Also remove edges connected to deleted nodes
+      setEdges((eds) => eds.filter((edge) => 
+        !nodeIdsToDelete.includes(edge.source) && !nodeIdsToDelete.includes(edge.target)
+      ));
+      setSelectedNodes([]);
+    }
+  }, [selectedNodes, setNodes, setEdges]);
+
+  // Delete a specific node (for use in the edit modal)
+  const deleteNode = useCallback((nodeId: string) => {
+    setNodes((nds) => nds.filter((node) => node.id !== nodeId));
+    // Also remove edges connected to the deleted node
+    setEdges((eds) => eds.filter((edge) => 
+      edge.source !== nodeId && edge.target !== nodeId
+    ));
+    setEditingNodeId(null);
+    setEditingLabel("");
+    setEditingNodeType('default');
+  }, [setNodes, setEdges]);
+
+  // Handle keyboard events for deletion
+  const onKeyDown = useCallback((event: KeyboardEvent) => {
+    if ((event.key === 'Delete' || event.key === 'Backspace') && !editingNodeId && !editingEdgeId) {
+      deleteSelectedNodes();
+    }
+  }, [deleteSelectedNodes, editingNodeId, editingEdgeId]);
+
+  // Track selected nodes
+  const onSelectionChange = useCallback(({ nodes }: { nodes: Node[] }) => {
+    setSelectedNodes(nodes);
+  }, []);
+
+  // Set up keyboard event listener
+  useEffect(() => {
+    window.addEventListener('keydown', onKeyDown);
+    return () => {
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, [onKeyDown]);
+
+  // Export canvas to PDF
+  const exportToPDF = useCallback(async () => {
+    const nodesBounds = getNodesBounds(getNodes());
+    const viewportWidth = 1024;
+    const viewportHeight = 768;
+    
+    const viewport = getViewportForBounds(
+      nodesBounds,
+      viewportWidth,
+      viewportHeight,
+      0.5,
+      2,
+      0.2
+    );
+
+    if (reactFlowWrapper.current) {
+      try {
+        const dataUrl = await toPng(reactFlowWrapper.current, {
+          backgroundColor: '#ffffff',
+          width: viewportWidth,
+          height: viewportHeight,
+          style: {
+            width: `${viewportWidth}px`,
+            height: `${viewportHeight}px`,
+            transform: `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.zoom})`,
+          },
+        });
+
+        const pdf = new jsPDF({
+          orientation: viewportWidth > viewportHeight ? 'landscape' : 'portrait',
+          unit: 'px',
+          format: [viewportWidth, viewportHeight],
+        });
+
+        const img = new Image();
+        img.src = dataUrl;
+        img.onload = () => {
+          pdf.addImage(dataUrl, 'PNG', 0, 0, viewportWidth, viewportHeight);
+          pdf.save('diagram.pdf');
+        };
+      } catch (error) {
+        console.error('Error exporting to PDF:', error);
+        alert('Failed to export diagram to PDF. Please try again.');
+      }
+    }
+  }, [getNodes]);
+
   // INI ADALAH FUNGSI KUNCINYA
   const handleGenerateFlow = async () => {
     setIsLoading(true);
@@ -224,7 +324,7 @@ function FlowCanvas() {
         }
       `}</style>
       {!isLoading ? (
-        <div style={{ height: '100%', width: '100%' }}>
+        <div ref={reactFlowWrapper} style={{ height: '100%', width: '100%' }}>
           <ReactFlow
             nodes={nodes}
             edges={edges}
@@ -233,6 +333,7 @@ function FlowCanvas() {
             onConnect={onConnect}
             onNodeDoubleClick={onNodeDoubleClick}
             onEdgeDoubleClick={onEdgeDoubleClick}
+            onSelectionChange={onSelectionChange}
             nodeTypes={nodeTypes}
             edgeTypes={edgeTypes}
             fitView
@@ -299,6 +400,33 @@ function FlowCanvas() {
             >
               ➕ Add Node
             </button>
+            <button
+              onClick={exportToPDF}
+              style={{
+                backgroundColor: '#dc3545',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '10px 20px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: '500',
+                boxShadow: '0 2px 8px rgba(220,53,69,0.3)',
+                transition: 'all 0.3s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#c82333';
+                e.currentTarget.style.transform = 'translateY(-1px)';
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(220,53,69,0.4)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#dc3545';
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 2px 8px rgba(220,53,69,0.3)';
+              }}
+            >
+              📄 Export PDF
+            </button>
           </div>
           {/* Instructions */}
           <div
@@ -315,7 +443,7 @@ function FlowCanvas() {
               zIndex: 5,
             }}
           >
-            💡 Double-click a node/edge to edit • Drag to connect nodes
+            💡 Double-click a node/edge to edit • Drag to connect nodes • Select and press Delete to remove nodes
           </div>
         </div>
       ) : (
@@ -419,11 +547,11 @@ function FlowCanvas() {
                 <option value="circle">Circle</option>
               </select>
             </div>
-            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'space-between' }}>
               <button
-                onClick={cancelEdit}
+                onClick={() => editingNodeId && deleteNode(editingNodeId)}
                 style={{
-                  backgroundColor: '#6c757d',
+                  backgroundColor: '#dc3545',
                   color: 'white',
                   border: 'none',
                   borderRadius: '6px',
@@ -431,23 +559,45 @@ function FlowCanvas() {
                   cursor: 'pointer',
                   fontSize: '14px',
                 }}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={saveNodeLabel}
-                style={{
-                  backgroundColor: '#007bff',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  padding: '8px 16px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#c82333';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = '#dc3545';
                 }}
               >
-                Save
+                Delete
               </button>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button
+                  onClick={cancelEdit}
+                  style={{
+                    backgroundColor: '#6c757d',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '6px',
+                    padding: '8px 16px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={saveNodeLabel}
+                  style={{
+                    backgroundColor: '#007bff',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '6px',
+                    padding: '8px 16px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                  }}
+                >
+                  Save
+                </button>
+              </div>
             </div>
           </div>
         </div>
