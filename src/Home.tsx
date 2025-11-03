@@ -23,18 +23,18 @@ const NODE_POSITION_OFFSET = 100;
 // import axios from 'axios'; // Untuk memanggil backend
 
 const initialNodes: Node[] = [
-  { id: '1', type: 'default', position: { x: 250, y: 50 }, data: { label: 'Start' } },
+  { id: '1', type: 'oval', position: { x: 250, y: 50 }, data: { label: 'Start' } },
   { id: '2', type: 'default', position: { x: 250, y: 150 }, data: { label: 'Input Data' } },
   { id: '3', type: 'default', position: { x: 250, y: 250 }, data: { label: 'Process' } },
-  { id: '4', type: 'default', position: { x: 100, y: 350 }, data: { label: 'Decision' } },
+  { id: '4', type: 'diamond', position: { x: 100, y: 350 }, data: { label: 'Decision' } },
   { id: '5', type: 'default', position: { x: 400, y: 350 }, data: { label: 'Output' } },
-  { id: '6', type: 'default', position: { x: 250, y: 450 }, data: { label: 'End' } },
+  { id: '6', type: 'oval', position: { x: 250, y: 450 }, data: { label: 'End' } },
 ];
 const initialEdges: Edge[] = [
   { id: 'e1-2', source: '1', target: '2', type: 'custom' },
   { id: 'e2-3', source: '2', target: '3', type: 'custom' },
-  { id: 'e3-4', source: '3', target: '4', type: 'custom' },
-  { id: 'e3-5', source: '3', target: '5', type: 'custom' },
+  { id: 'e3-4', source: '3', target: '4', type: 'custom', label: 'Yes' },
+  { id: 'e3-5', source: '3', target: '5', type: 'custom', label: 'No' },
   { id: 'e4-6', source: '4', target: '6', type: 'custom' },
   { id: 'e5-6', source: '5', target: '6', type: 'custom' },
 ];
