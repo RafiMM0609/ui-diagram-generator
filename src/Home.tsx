@@ -11,8 +11,7 @@ import ReactFlow, {
   type Edge,
   type Connection,
   useReactFlow,
-  getNodesBounds,
-  getViewportForBounds
+  getNodesBounds
 } from 'reactflow';
 import { toPng } from 'html-to-image';
 import { jsPDF } from 'jspdf';
@@ -59,7 +58,7 @@ function FlowCanvas() {
   const [editingEdgeLabel, setEditingEdgeLabel] = useState("");
   const [selectedNodes, setSelectedNodes] = useState<Node[]>([]);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
-  const { getNodes } = useReactFlow();
+  const { getNodes, fitView } = useReactFlow();
 
   // Define custom node types
   const nodeTypes = useMemo(() => ({
@@ -210,50 +209,56 @@ function FlowCanvas() {
 
   // Export canvas to PDF
   const exportToPDF = useCallback(async () => {
-    const nodesBounds = getNodesBounds(getNodes());
-    const viewportWidth = 1024;
-    const viewportHeight = 768;
+    // CALL_FIT_VIEW_BEFORE_SNAPSHOT: Temporarily adjust viewport to fit all elements
+    // This ensures all nodes and edges are visible and properly rendered before snapshot
+    await fitView({ padding: 0.2, duration: 200 });
     
-    const viewport = getViewportForBounds(
-      nodesBounds,
-      viewportWidth,
-      viewportHeight,
-      0.5,
-      2,
-      0.2
-    );
+    // Wait for fitView animation to complete
+    await new Promise(resolve => setTimeout(resolve, 300));
 
-    if (reactFlowWrapper.current) {
+    // ADJUST_CANVAS_DIMENSIONS_TO_CONTENT: Calculate actual bounds of all nodes
+    const nodesBounds = getNodesBounds(getNodes());
+    
+    // Add padding to the bounds
+    const padding = 50;
+    const width = nodesBounds.width + padding * 2;
+    const height = nodesBounds.height + padding * 2;
+
+    // SELECT_CORRECT_BOUNDING_BOX: Target the React Flow renderer element specifically
+    // This is the element that contains the actual diagram
+    const reactFlowRenderer = reactFlowWrapper.current?.querySelector('.react-flow__renderer') as HTMLElement;
+    
+    if (reactFlowRenderer) {
       try {
-        const dataUrl = await toPng(reactFlowWrapper.current, {
+        // ADJUST_CANVAS_DIMENSIONS_TO_CONTENT: Set canvas dimensions to match content bounds
+        const dataUrl = await toPng(reactFlowRenderer, {
           backgroundColor: '#ffffff',
-          width: viewportWidth,
-          height: viewportHeight,
-          style: {
-            width: `${viewportWidth}px`,
-            height: `${viewportHeight}px`,
-            transform: `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.zoom})`,
-          },
+          width: width,
+          height: height,
+          pixelRatio: 2, // Higher quality export
         });
 
         const pdf = new jsPDF({
-          orientation: viewportWidth > viewportHeight ? 'landscape' : 'portrait',
+          orientation: width > height ? 'landscape' : 'portrait',
           unit: 'px',
-          format: [viewportWidth, viewportHeight],
+          format: [width, height],
         });
 
         const img = new Image();
         img.src = dataUrl;
         img.onload = () => {
-          pdf.addImage(dataUrl, 'PNG', 0, 0, viewportWidth, viewportHeight);
+          pdf.addImage(dataUrl, 'PNG', 0, 0, width, height);
           pdf.save('diagram.pdf');
         };
       } catch (error) {
         console.error('Error exporting to PDF:', error);
         alert('Failed to export diagram to PDF. Please try again.');
       }
+    } else {
+      console.error('React Flow renderer element not found');
+      alert('Failed to find diagram element. Please try again.');
     }
-  }, [getNodes]);
+  }, [getNodes, fitView]);
 
   // INI ADALAH FUNGSI KUNCINYA
   const handleGenerateFlow = async () => {
