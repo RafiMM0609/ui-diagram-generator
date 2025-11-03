@@ -110,6 +110,7 @@ function FlowCanvas() {
   const [isExcelSelectMode, setIsExcelSelectMode] = useState(false);
   const [selectedNodesForExcel, setSelectedNodesForExcel] = useState<Set<string>>(new Set());
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
+  const [generateCount, setGenerateCount] = useState(0);
   const { getNodes, fitView } = useReactFlow();
 
   // Define custom node types
@@ -556,9 +557,15 @@ function FlowCanvas() {
     try {
       // Add current prompt to history
       setPromptHistory(prev => [...prev, prompt]);
+      var finalPrompt = prompt;
+      if (generateCount > 0) {
+        // Modify prompt to include existing flow context
+        const existingFlowSummary = `This is the existing flow chart data in JSON format: ${JSON.stringify({ nodes, edges })}. Please update the flow chart based on the new prompt: "${prompt}". Ensure continuity and coherence with the existing structure.`;
+        finalPrompt = existingFlowSummary;
+      }
       
       // 1. Kirim prompt ke backend Anda (bukan ke AI langsung)
-      const response = await fetch(`http://127.0.0.1:3000/api/generate/flow?promp=${encodeURIComponent(prompt)}`, {
+      const response = await fetch(`http://127.0.0.1:3000/api/generate/flow?promp=${encodeURIComponent(finalPrompt)}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -584,6 +591,7 @@ function FlowCanvas() {
       
       // Clear the prompt after successful generation
       setPrompt("");
+      setGenerateCount(prev => prev + 1);
 
     } catch (error) {
       console.error("Error generating flow:", error);
