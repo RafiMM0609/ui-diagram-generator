@@ -25,7 +25,7 @@ import CustomEdge from './edges/CustomEdge';
 const NODE_POSITION_RANGE = 400;
 const NODE_POSITION_OFFSET = 100;
 // PDF Export constants
-const PDF_EXPORT_PADDING = 50;
+const PDF_EXPORT_PADDING = 250;
 const PDF_FIT_VIEW_DURATION = 200;
 const PDF_FIT_VIEW_WAIT_TIME = 300;
 // import axios from 'axios'; // Untuk memanggil backend

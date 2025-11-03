@@ -7,8 +7,8 @@ function DiamondNode({ data }: NodeProps) {
       <Handle type="target" position={Position.Top} />
       <div
         style={{
-          width: '90px',
-          height: '90px',
+          width: '140px',
+          height: '140px',
           background: '#fff',
           border: '2px solid #555',
           transform: 'rotate(45deg)',
