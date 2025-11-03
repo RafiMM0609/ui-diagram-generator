@@ -15,6 +15,7 @@ import ReactFlow, {
 } from 'reactflow';
 import { toPng } from 'html-to-image';
 import { jsPDF } from 'jspdf';
+import ExcelJS from 'exceljs';
 import 'reactflow/dist/style.css';
 import DiamondNode from './nodes/DiamondNode';
 import OvalNode from './nodes/OvalNode';
@@ -31,12 +32,12 @@ const PDF_FIT_VIEW_WAIT_TIME = 300;
 // import axios from 'axios'; // Untuk memanggil backend
 
 const initialNodes: Node[] = [
-  { id: '1', type: 'oval', position: { x: 250, y: 50 }, data: { label: 'Start' } },
-  { id: '2', type: 'default', position: { x: 250, y: 150 }, data: { label: 'Input Data' } },
-  { id: '3', type: 'default', position: { x: 250, y: 250 }, data: { label: 'Process' } },
-  { id: '4', type: 'diamond', position: { x: 100, y: 350 }, data: { label: 'Decision' } },
-  { id: '5', type: 'default', position: { x: 400, y: 350 }, data: { label: 'Output' } },
-  { id: '6', type: 'oval', position: { x: 250, y: 450 }, data: { label: 'End' } },
+  { id: '1', type: 'oval', position: { x: 300, y: 50 }, data: { label: 'Start' } },
+  { id: '2', type: 'default', position: { x: 300, y: 180 }, data: { label: 'Input Data' }, style: { background: 'linear-gradient(135deg, #ffffff 0%, #e3f2fd 100%)', border: '2px solid #2196f3', padding: '12px 20px', borderRadius: '8px', fontWeight: '500', boxShadow: '0 4px 12px rgba(33, 150, 243, 0.2)' } },
+  { id: '3', type: 'default', position: { x: 300, y: 310 }, data: { label: 'Process' }, style: { background: 'linear-gradient(135deg, #ffffff 0%, #e3f2fd 100%)', border: '2px solid #2196f3', padding: '12px 20px', borderRadius: '8px', fontWeight: '500', boxShadow: '0 4px 12px rgba(33, 150, 243, 0.2)' } },
+  { id: '4', type: 'diamond', position: { x: 150, y: 460 }, data: { label: 'Decision' } },
+  { id: '5', type: 'default', position: { x: 450, y: 490 }, data: { label: 'Output' }, style: { background: 'linear-gradient(135deg, #ffffff 0%, #e3f2fd 100%)', border: '2px solid #2196f3', padding: '12px 20px', borderRadius: '8px', fontWeight: '500', boxShadow: '0 4px 12px rgba(33, 150, 243, 0.2)' } },
+  { id: '6', type: 'oval', position: { x: 300, y: 630 }, data: { label: 'End' } },
 ];
 const initialEdges: Edge[] = [
   { 
@@ -99,6 +100,8 @@ function FlowCanvas() {
   const [editingEdgeId, setEditingEdgeId] = useState<string | null>(null);
   const [editingEdgeLabel, setEditingEdgeLabel] = useState("");
   const [selectedNodes, setSelectedNodes] = useState<Node[]>([]);
+  const [isExcelSelectMode, setIsExcelSelectMode] = useState(false);
+  const [selectedNodesForExcel, setSelectedNodesForExcel] = useState<Set<string>>(new Set());
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const { getNodes, fitView } = useReactFlow();
 
@@ -415,6 +418,127 @@ function FlowCanvas() {
     }
   }, [fitView]);
 
+  // Toggle Excel selection mode
+  const toggleExcelSelectMode = useCallback(() => {
+    setIsExcelSelectMode(prev => !prev);
+    if (isExcelSelectMode) {
+      // If exiting selection mode, clear selections
+      setSelectedNodesForExcel(new Set());
+    }
+  }, [isExcelSelectMode]);
+
+  // Handle node click in Excel selection mode
+  const handleNodeClickForExcel = useCallback((event: React.MouseEvent, node: Node) => {
+    if (isExcelSelectMode) {
+      event.stopPropagation();
+      setSelectedNodesForExcel(prev => {
+        const newSet = new Set(prev);
+        if (newSet.has(node.id)) {
+          newSet.delete(node.id);
+        } else {
+          newSet.add(node.id);
+        }
+        return newSet;
+      });
+    }
+  }, [isExcelSelectMode]);
+
+  // Export selected nodes to Excel
+  const exportToExcel = useCallback(async () => {
+    try {
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet('Diagram Data');
+
+      // Get selected nodes or all nodes if none selected
+      const nodesToExport = selectedNodesForExcel.size > 0 
+        ? nodes.filter(node => selectedNodesForExcel.has(node.id))
+        : nodes;
+
+      // Get edges related to selected nodes
+      const nodeIds = new Set(nodesToExport.map(n => n.id));
+      const edgesToExport = edges.filter(edge => 
+        nodeIds.has(edge.source) && nodeIds.has(edge.target)
+      );
+
+      // Add headers for nodes
+      worksheet.addRow(['NODES']);
+      worksheet.addRow(['ID', 'Type', 'Label', 'Position X', 'Position Y']);
+      
+      // Style header
+      worksheet.getRow(2).font = { bold: true };
+      worksheet.getRow(2).fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF4A90E2' }
+      };
+
+      // Add node data
+      nodesToExport.forEach(node => {
+        worksheet.addRow([
+          node.id,
+          node.type || 'default',
+          node.data.label as string,
+          node.position.x,
+          node.position.y
+        ]);
+      });
+
+      // Add spacing
+      worksheet.addRow([]);
+
+      // Add headers for edges
+      const edgeStartRow = worksheet.rowCount + 1;
+      worksheet.addRow(['EDGES']);
+      worksheet.addRow(['ID', 'Source', 'Target', 'Label']);
+      
+      // Style header
+      worksheet.getRow(edgeStartRow + 1).font = { bold: true };
+      worksheet.getRow(edgeStartRow + 1).fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF28A745' }
+      };
+
+      // Add edge data
+      edgesToExport.forEach(edge => {
+        worksheet.addRow([
+          edge.id,
+          edge.source,
+          edge.target,
+          typeof edge.label === 'string' ? edge.label : ''
+        ]);
+      });
+
+      // Auto-fit columns
+      worksheet.columns.forEach(column => {
+        column.width = 15;
+      });
+
+      // Generate Excel file
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], { 
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+      });
+      
+      // Download file
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `diagram-${selectedNodesForExcel.size > 0 ? 'selected' : 'all'}-${Date.now()}.xlsx`;
+      link.click();
+      window.URL.revokeObjectURL(url);
+
+      // Exit selection mode and clear selections
+      setIsExcelSelectMode(false);
+      setSelectedNodesForExcel(new Set());
+      
+      alert(`Exported ${nodesToExport.length} nodes and ${edgesToExport.length} edges to Excel!`);
+    } catch (error) {
+      console.error('Error exporting to Excel:', error);
+      alert('Failed to export to Excel. Please try again.');
+    }
+  }, [nodes, edges, selectedNodesForExcel]);
+
   // INI ADALAH FUNGSI KUNCINYA
   const handleGenerateFlow = async () => {
     setIsLoading(true);
@@ -486,11 +610,24 @@ function FlowCanvas() {
       {!isLoading ? (
         <div ref={reactFlowWrapper} style={{ height: '100%', width: '100%' }}>
           <ReactFlow
-            nodes={nodes}
+            nodes={nodes.map(node => ({
+              ...node,
+              style: {
+                ...node.style,
+                ...(isExcelSelectMode && selectedNodesForExcel.has(node.id) ? {
+                  boxShadow: '0 0 0 3px #ff6b6b',
+                  opacity: 1
+                } : {}),
+                ...(isExcelSelectMode && !selectedNodesForExcel.has(node.id) ? {
+                  opacity: 0.5
+                } : {})
+              }
+            }))}
             edges={edges}
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
+            onNodeClick={handleNodeClickForExcel}
             onNodeDoubleClick={onNodeDoubleClick}
             onEdgeDoubleClick={onEdgeDoubleClick}
             onSelectionChange={onSelectionChange}
@@ -616,6 +753,64 @@ function FlowCanvas() {
             >
               📋 Export Full
             </button>
+            <button
+              onClick={toggleExcelSelectMode}
+              style={{
+                backgroundColor: isExcelSelectMode ? '#ff6b6b' : '#17a2b8',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '10px 20px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: '500',
+                boxShadow: isExcelSelectMode ? '0 2px 8px rgba(255,107,107,0.3)' : '0 2px 8px rgba(23,162,184,0.3)',
+                transition: 'all 0.3s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = isExcelSelectMode ? '#ff5252' : '#138496';
+                e.currentTarget.style.transform = 'translateY(-1px)';
+                e.currentTarget.style.boxShadow = isExcelSelectMode ? '0 4px 12px rgba(255,107,107,0.4)' : '0 4px 12px rgba(23,162,184,0.4)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = isExcelSelectMode ? '#ff6b6b' : '#17a2b8';
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = isExcelSelectMode ? '0 2px 8px rgba(255,107,107,0.3)' : '0 2px 8px rgba(23,162,184,0.3)';
+              }}
+              title={isExcelSelectMode ? 'Exit selection mode' : 'Select nodes to export to Excel'}
+            >
+              {isExcelSelectMode ? '✖ Cancel' : '📊 Select for Excel'}
+            </button>
+            {(isExcelSelectMode || selectedNodesForExcel.size > 0) && (
+              <button
+                onClick={exportToExcel}
+                style={{
+                  backgroundColor: '#20c997',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '10px 20px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  boxShadow: '0 2px 8px rgba(32,201,151,0.3)',
+                  transition: 'all 0.3s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#1aa179';
+                  e.currentTarget.style.transform = 'translateY(-1px)';
+                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(32,201,151,0.4)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = '#20c997';
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 2px 8px rgba(32,201,151,0.3)';
+                }}
+                title={`Export ${selectedNodesForExcel.size > 0 ? selectedNodesForExcel.size + ' selected' : 'all'} nodes to Excel`}
+              >
+                📑 Export {selectedNodesForExcel.size > 0 ? `(${selectedNodesForExcel.size})` : 'All'} to Excel
+              </button>
+            )}
           </div>
           {/* Instructions */}
           <div
@@ -632,7 +827,7 @@ function FlowCanvas() {
               zIndex: 5,
             }}
           >
-            💡 Double-click a node/edge to edit • Drag to connect nodes • Select and press Delete to remove nodes • Try "Export Full" if edges don't appear in PDF
+            💡 Double-click a node/edge to edit • Drag to connect nodes • Select and press Delete to remove nodes{isExcelSelectMode ? ' • Click nodes to select/deselect for Excel export' : ' • Use "Select for Excel" to choose specific nodes to export'}
           </div>
         </div>
       ) : (
