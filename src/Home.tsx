@@ -792,7 +792,7 @@ function FlowCanvas() {
             style={{
               position: 'absolute',
               top: '20px',
-              left: '260px',
+              left: '140px',
               display: 'flex',
               gap: '10px',
               alignItems: 'center',
@@ -854,7 +854,7 @@ function FlowCanvas() {
             >
               📋 Export Full
             </button>
-            <button
+            {/* <button
               onClick={toggleExcelSelectMode}
               style={{
                 backgroundColor: isExcelSelectMode ? '#ff6b6b' : '#17a2b8',
@@ -881,8 +881,8 @@ function FlowCanvas() {
               title={isExcelSelectMode ? 'Exit selection mode' : 'Select nodes to export to Excel'}
             >
               {isExcelSelectMode ? '✖ Cancel' : '📊 Select for Excel'}
-            </button>
-            {(isExcelSelectMode || selectedNodesForExcel.size > 0) && (
+            </button> */}
+            {/* {(isExcelSelectMode || selectedNodesForExcel.size > 0) && (
               <button
                 onClick={exportToExcel}
                 style={{
@@ -911,10 +911,10 @@ function FlowCanvas() {
               >
                 📑 Export {selectedNodesForExcel.size > 0 ? `(${selectedNodesForExcel.size})` : 'All'} to Excel
               </button>
-            )}
+            )} */}
           </div>
           {/* Instructions */}
-          <div
+          {/* <div
             style={{
               position: 'absolute',
               top: '20px',
@@ -929,7 +929,7 @@ function FlowCanvas() {
             }}
           >
             💡 Double-click a node/edge to edit • Drag to connect nodes • Select and press Delete to remove nodes{isExcelSelectMode ? ' • Click nodes to select/deselect for Excel export' : ' • Use "Select for Excel" to choose specific nodes to export'}
-          </div>
+          </div> */}
         </div>
       ) : (
         <div style={{
