@@ -1257,7 +1257,7 @@ function FlowCanvas() {
                     }}
                   >
                     <span style={{ color: '#999', fontSize: '11px', marginRight: '6px' }}>
-                      #{promptHistory.length - index}
+                      #{index + 1}
                     </span>
                     {historyPrompt}
                   </div>
@@ -1306,54 +1306,60 @@ function FlowCanvas() {
             <div style={{ fontSize: '11px', color: '#999', marginTop: '6px', marginBottom: '10px' }}>
               💡 Press Enter to generate • Shift+Enter for new line
             </div>
-            <button
-              onClick={handleGenerateFlow}
-              disabled={isLoading || !prompt.trim()}
-              style={{
-                backgroundColor: (isLoading || !prompt.trim()) ? '#6c757d' : '#007bff',
-                color: 'white',
-                border: 'none',
-                borderRadius: '10px',
-                padding: '12px 20px',
-                cursor: (isLoading || !prompt.trim()) ? 'not-allowed' : 'pointer',
-                fontSize: '14px',
-                fontWeight: '600',
-                width: '100%',
-                transition: 'all 0.3s ease',
-                boxShadow: (isLoading || !prompt.trim()) ? 'none' : '0 4px 12px rgba(0,123,255,0.3)',
-                opacity: (isLoading || !prompt.trim()) ? 0.6 : 1
-              }}
-              onMouseEnter={(e) => {
-                if (!isLoading && prompt.trim()) {
-                  e.currentTarget.style.backgroundColor = '#0056b3';
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.boxShadow = '0 6px 16px rgba(0,123,255,0.4)';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!isLoading && prompt.trim()) {
-                  e.currentTarget.style.backgroundColor = '#007bff';
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,123,255,0.3)';
-                }
-              }}
-            >
-              {isLoading ? (
-                <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
-                  <span style={{
-                    display: 'inline-block',
-                    width: '14px',
-                    height: '14px',
-                    border: '2px solid white',
-                    borderTop: '2px solid transparent',
-                    borderRadius: '50%',
-                    animation: 'spin 0.8s linear infinite'
-                  }}>
-                  </span>
-                  Generating...
-                </span>
-              ) : "✨ Generate Diagram"}
-            </button>
+            {(() => {
+              const isPromptEmpty = !prompt.trim();
+              const isDisabled = isLoading || isPromptEmpty;
+              return (
+                <button
+                  onClick={handleGenerateFlow}
+                  disabled={isDisabled}
+                  style={{
+                    backgroundColor: isDisabled ? '#6c757d' : '#007bff',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '10px',
+                    padding: '12px 20px',
+                    cursor: isDisabled ? 'not-allowed' : 'pointer',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    width: '100%',
+                    transition: 'all 0.3s ease',
+                    boxShadow: isDisabled ? 'none' : '0 4px 12px rgba(0,123,255,0.3)',
+                    opacity: isDisabled ? 0.6 : 1
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isDisabled) {
+                      e.currentTarget.style.backgroundColor = '#0056b3';
+                      e.currentTarget.style.transform = 'translateY(-2px)';
+                      e.currentTarget.style.boxShadow = '0 6px 16px rgba(0,123,255,0.4)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isDisabled) {
+                      e.currentTarget.style.backgroundColor = '#007bff';
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,123,255,0.3)';
+                    }
+                  }}
+                >
+                  {isLoading ? (
+                    <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
+                      <span style={{
+                        display: 'inline-block',
+                        width: '14px',
+                        height: '14px',
+                        border: '2px solid white',
+                        borderTop: '2px solid transparent',
+                        borderRadius: '50%',
+                        animation: 'spin 0.8s linear infinite'
+                      }}>
+                      </span>
+                      Generating...
+                    </span>
+                  ) : "✨ Generate Diagram"}
+                </button>
+              );
+            })()}
           </div>
         </div>
       )}
