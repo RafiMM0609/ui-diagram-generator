@@ -1,5 +1,5 @@
 // FlowCanvas Component - Interactive diagram editor with node creation, editing, and connection capabilities
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import ReactFlow, { 
   useNodesState, 
   useEdgesState, 
@@ -12,6 +12,10 @@ import ReactFlow, {
   type Connection
 } from 'reactflow';
 import 'reactflow/dist/style.css';
+import DiamondNode from './nodes/DiamondNode';
+import OvalNode from './nodes/OvalNode';
+import CircleNode from './nodes/CircleNode';
+import CustomEdge from './edges/CustomEdge';
 
 // Constants for node positioning
 const NODE_POSITION_RANGE = 400;
@@ -19,20 +23,20 @@ const NODE_POSITION_OFFSET = 100;
 // import axios from 'axios'; // Untuk memanggil backend
 
 const initialNodes: Node[] = [
-  { id: '1', type: 'default', position: { x: 250, y: 50 }, data: { label: 'Start' } },
+  { id: '1', type: 'oval', position: { x: 250, y: 50 }, data: { label: 'Start' } },
   { id: '2', type: 'default', position: { x: 250, y: 150 }, data: { label: 'Input Data' } },
   { id: '3', type: 'default', position: { x: 250, y: 250 }, data: { label: 'Process' } },
-  { id: '4', type: 'default', position: { x: 100, y: 350 }, data: { label: 'Decision' } },
+  { id: '4', type: 'diamond', position: { x: 100, y: 350 }, data: { label: 'Decision' } },
   { id: '5', type: 'default', position: { x: 400, y: 350 }, data: { label: 'Output' } },
-  { id: '6', type: 'default', position: { x: 250, y: 450 }, data: { label: 'End' } },
+  { id: '6', type: 'oval', position: { x: 250, y: 450 }, data: { label: 'End' } },
 ];
 const initialEdges: Edge[] = [
-  { id: 'e1-2', source: '1', target: '2' },
-  { id: 'e2-3', source: '2', target: '3' },
-  { id: 'e3-4', source: '3', target: '4' },
-  { id: 'e3-5', source: '3', target: '5' },
-  { id: 'e4-6', source: '4', target: '6' },
-  { id: 'e5-6', source: '5', target: '6' },
+  { id: 'e1-2', source: '1', target: '2', type: 'custom' },
+  { id: 'e2-3', source: '2', target: '3', type: 'custom' },
+  { id: 'e3-4', source: '3', target: '4', type: 'custom', label: 'Yes' },
+  { id: 'e3-5', source: '3', target: '5', type: 'custom', label: 'No' },
+  { id: 'e4-6', source: '4', target: '6', type: 'custom' },
+  { id: 'e5-6', source: '5', target: '6', type: 'custom' },
 ];
 
 function FlowCanvas() {
@@ -44,10 +48,26 @@ function FlowCanvas() {
   const [nodeIdCounter, setNodeIdCounter] = useState(initialNodes.length + 1);
   const [editingNodeId, setEditingNodeId] = useState<string | null>(null);
   const [editingLabel, setEditingLabel] = useState("");
+  const [selectedNodeType, setSelectedNodeType] = useState<string>('default');
+  const [editingNodeType, setEditingNodeType] = useState<string>('default');
+  const [editingEdgeId, setEditingEdgeId] = useState<string | null>(null);
+  const [editingEdgeLabel, setEditingEdgeLabel] = useState("");
+
+  // Define custom node types
+  const nodeTypes = useMemo(() => ({
+    diamond: DiamondNode,
+    oval: OvalNode,
+    circle: CircleNode,
+  }), []);
+
+  // Define custom edge types
+  const edgeTypes = useMemo(() => ({
+    custom: CustomEdge,
+  }), []);
 
   // Handle connecting nodes
   const onConnect = useCallback(
-    (params: Connection) => setEdges((eds) => addEdge(params, eds)),
+    (params: Connection) => setEdges((eds) => addEdge({ ...params, type: 'custom' }, eds)),
     [setEdges]
   );
 
@@ -55,7 +75,7 @@ function FlowCanvas() {
   const addNode = useCallback(() => {
     const newNode: Node = {
       id: nodeIdCounter.toString(),
-      type: 'default',
+      type: selectedNodeType,
       position: { 
         x: Math.random() * NODE_POSITION_RANGE + NODE_POSITION_OFFSET, 
         y: Math.random() * NODE_POSITION_RANGE + NODE_POSITION_OFFSET 
@@ -64,12 +84,13 @@ function FlowCanvas() {
     };
     setNodes((nds) => [...nds, newNode]);
     setNodeIdCounter((id) => id + 1);
-  }, [nodeIdCounter, setNodes]);
+  }, [nodeIdCounter, selectedNodeType, setNodes]);
 
   // Handle node double-click to edit label
   const onNodeDoubleClick = useCallback((_event: React.MouseEvent, node: Node) => {
     setEditingNodeId(node.id);
     setEditingLabel(node.data.label as string);
+    setEditingNodeType(node.type || 'default');
   }, []);
 
   // Save the edited label
@@ -80,6 +101,7 @@ function FlowCanvas() {
           if (node.id === editingNodeId) {
             return {
               ...node,
+              type: editingNodeType,
               data: {
                 ...node.data,
                 label: editingLabel,
@@ -91,13 +113,46 @@ function FlowCanvas() {
       );
       setEditingNodeId(null);
       setEditingLabel("");
+      setEditingNodeType('default');
     }
-  }, [editingNodeId, editingLabel, setNodes]);
+  }, [editingNodeId, editingLabel, editingNodeType, setNodes]);
 
   // Cancel editing
   const cancelEdit = useCallback(() => {
     setEditingNodeId(null);
     setEditingLabel("");
+    setEditingNodeType('default');
+  }, []);
+
+  // Handle edge double-click to edit label
+  const onEdgeDoubleClick = useCallback((_event: React.MouseEvent, edge: Edge) => {
+    setEditingEdgeId(edge.id);
+    setEditingEdgeLabel(typeof edge.label === 'string' ? edge.label : '');
+  }, []);
+
+  // Save the edited edge label
+  const saveEdgeLabel = useCallback(() => {
+    if (editingEdgeId) {
+      setEdges((eds) =>
+        eds.map((edge) => {
+          if (edge.id === editingEdgeId) {
+            return {
+              ...edge,
+              label: editingEdgeLabel,
+            };
+          }
+          return edge;
+        })
+      );
+      setEditingEdgeId(null);
+      setEditingEdgeLabel("");
+    }
+  }, [editingEdgeId, editingEdgeLabel, setEdges]);
+
+  // Cancel edge editing
+  const cancelEdgeEdit = useCallback(() => {
+    setEditingEdgeId(null);
+    setEditingEdgeLabel("");
   }, []);
 
   // INI ADALAH FUNGSI KUNCINYA
@@ -177,44 +232,74 @@ function FlowCanvas() {
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
             onNodeDoubleClick={onNodeDoubleClick}
+            onEdgeDoubleClick={onEdgeDoubleClick}
+            nodeTypes={nodeTypes}
+            edgeTypes={edgeTypes}
             fitView
           >
             <Controls />
             <MiniMap />
             <Background gap={12} size={1} />
           </ReactFlow>
-          {/* Add Node Button */}
-          <button
-            onClick={addNode}
+          {/* Node Type Selector and Add Node Button */}
+          <div
             style={{
               position: 'absolute',
               top: '20px',
               left: '20px',
-              backgroundColor: '#28a745',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              padding: '10px 20px',
-              cursor: 'pointer',
-              fontSize: '14px',
-              fontWeight: '500',
-              boxShadow: '0 2px 8px rgba(40,167,69,0.3)',
+              display: 'flex',
+              gap: '10px',
+              alignItems: 'center',
               zIndex: 5,
-              transition: 'all 0.3s ease',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#218838';
-              e.currentTarget.style.transform = 'translateY(-1px)';
-              e.currentTarget.style.boxShadow = '0 4px 12px rgba(40,167,69,0.4)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = '#28a745';
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = '0 2px 8px rgba(40,167,69,0.3)';
             }}
           >
-            ➕ Add Node
-          </button>
+            <select
+              value={selectedNodeType}
+              onChange={(e) => setSelectedNodeType(e.target.value)}
+              style={{
+                backgroundColor: 'white',
+                border: '1px solid #ddd',
+                borderRadius: '8px',
+                padding: '10px 15px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: '500',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+              }}
+            >
+              <option value="default">Rectangle</option>
+              <option value="diamond">Diamond</option>
+              <option value="oval">Oval</option>
+              <option value="circle">Circle</option>
+            </select>
+            <button
+              onClick={addNode}
+              style={{
+                backgroundColor: '#28a745',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '10px 20px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: '500',
+                boxShadow: '0 2px 8px rgba(40,167,69,0.3)',
+                transition: 'all 0.3s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#218838';
+                e.currentTarget.style.transform = 'translateY(-1px)';
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(40,167,69,0.4)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#28a745';
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 2px 8px rgba(40,167,69,0.3)';
+              }}
+            >
+              ➕ Add Node
+            </button>
+          </div>
           {/* Instructions */}
           <div
             style={{
@@ -230,7 +315,7 @@ function FlowCanvas() {
               zIndex: 5,
             }}
           >
-            💡 Double-click a node to edit text • Drag to connect nodes
+            💡 Double-click a node/edge to edit • Drag to connect nodes
           </div>
         </div>
       ) : (
@@ -290,24 +375,50 @@ function FlowCanvas() {
             onClick={(e) => e.stopPropagation()}
           >
             <h3 style={{ marginTop: 0, marginBottom: '15px', fontSize: '18px' }}>
-              Edit Node Label
+              Edit Node
             </h3>
-            <input
-              type="text"
-              value={editingLabel}
-              onChange={(e) => setEditingLabel(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && saveNodeLabel()}
-              autoFocus
-              style={{
-                width: '100%',
-                padding: '10px',
-                fontSize: '14px',
-                border: '1px solid #ddd',
-                borderRadius: '6px',
-                marginBottom: '15px',
-                boxSizing: 'border-box',
-              }}
-            />
+            <div style={{ marginBottom: '15px' }}>
+              <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', fontWeight: '500' }}>
+                Label
+              </label>
+              <input
+                type="text"
+                value={editingLabel}
+                onChange={(e) => setEditingLabel(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && saveNodeLabel()}
+                autoFocus
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  fontSize: '14px',
+                  border: '1px solid #ddd',
+                  borderRadius: '6px',
+                  boxSizing: 'border-box',
+                }}
+              />
+            </div>
+            <div style={{ marginBottom: '15px' }}>
+              <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', fontWeight: '500' }}>
+                Shape
+              </label>
+              <select
+                value={editingNodeType}
+                onChange={(e) => setEditingNodeType(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  fontSize: '14px',
+                  border: '1px solid #ddd',
+                  borderRadius: '6px',
+                  boxSizing: 'border-box',
+                }}
+              >
+                <option value="default">Rectangle</option>
+                <option value="diamond">Diamond</option>
+                <option value="oval">Oval</option>
+                <option value="circle">Circle</option>
+              </select>
+            </div>
             <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
               <button
                 onClick={cancelEdit}
@@ -336,6 +447,113 @@ function FlowCanvas() {
                 }}
               >
                 Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Edit Edge Modal */}
+      {editingEdgeId && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 2000,
+          }}
+          onClick={cancelEdgeEdit}
+        >
+          <div
+            style={{
+              backgroundColor: 'white',
+              borderRadius: '12px',
+              padding: '25px',
+              boxShadow: '0 10px 40px rgba(0,0,0,0.3)',
+              minWidth: '350px',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 style={{ marginTop: 0, marginBottom: '8px', fontSize: '18px', fontWeight: '600' }}>
+              Edit Edge Label
+            </h3>
+            <p style={{ margin: '0 0 15px 0', fontSize: '13px', color: '#666' }}>
+              Add a descriptive label to this connection (e.g., "Yes", "No", "Next")
+            </p>
+            <input
+              type="text"
+              value={editingEdgeLabel}
+              onChange={(e) => setEditingEdgeLabel(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && saveEdgeLabel()}
+              autoFocus
+              style={{
+                width: '100%',
+                padding: '12px',
+                fontSize: '14px',
+                border: '2px solid #e0e0e0',
+                borderRadius: '8px',
+                marginBottom: '15px',
+                boxSizing: 'border-box',
+                outline: 'none',
+                transition: 'border-color 0.2s',
+              }}
+              placeholder="e.g., Yes, No, Next..."
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = '#007bff';
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = '#e0e0e0';
+              }}
+            />
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+              <button
+                onClick={cancelEdgeEdit}
+                style={{
+                  backgroundColor: '#f5f5f5',
+                  color: '#333',
+                  border: '1px solid #ddd',
+                  borderRadius: '8px',
+                  padding: '10px 20px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  transition: 'all 0.2s',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#e8e8e8';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = '#f5f5f5';
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={saveEdgeLabel}
+                style={{
+                  backgroundColor: '#007bff',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '10px 20px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  transition: 'all 0.2s',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#0056b3';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = '#007bff';
+                }}
+              >
+                Save Label
               </button>
             </div>
           </div>
