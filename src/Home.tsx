@@ -24,6 +24,10 @@ import CustomEdge from './edges/CustomEdge';
 // Constants for node positioning
 const NODE_POSITION_RANGE = 400;
 const NODE_POSITION_OFFSET = 100;
+// PDF Export constants
+const PDF_EXPORT_PADDING = 50;
+const PDF_FIT_VIEW_DURATION = 200;
+const PDF_FIT_VIEW_WAIT_TIME = 300;
 // import axios from 'axios'; // Untuk memanggil backend
 
 const initialNodes: Node[] = [
@@ -211,52 +215,52 @@ function FlowCanvas() {
   const exportToPDF = useCallback(async () => {
     // CALL_FIT_VIEW_BEFORE_SNAPSHOT: Temporarily adjust viewport to fit all elements
     // This ensures all nodes and edges are visible and properly rendered before snapshot
-    await fitView({ padding: 0.2, duration: 200 });
+    await fitView({ padding: 0.2, duration: PDF_FIT_VIEW_DURATION });
     
     // Wait for fitView animation to complete
-    await new Promise(resolve => setTimeout(resolve, 300));
+    await new Promise(resolve => setTimeout(resolve, PDF_FIT_VIEW_WAIT_TIME));
 
     // ADJUST_CANVAS_DIMENSIONS_TO_CONTENT: Calculate actual bounds of all nodes
     const nodesBounds = getNodesBounds(getNodes());
     
-    // Add padding to the bounds
-    const padding = 50;
-    const width = nodesBounds.width + padding * 2;
-    const height = nodesBounds.height + padding * 2;
+    // Add padding to the bounds for better visual appearance
+    const width = nodesBounds.width + PDF_EXPORT_PADDING * 2;
+    const height = nodesBounds.height + PDF_EXPORT_PADDING * 2;
 
     // SELECT_CORRECT_BOUNDING_BOX: Target the React Flow renderer element specifically
     // This is the element that contains the actual diagram
-    const reactFlowRenderer = reactFlowWrapper.current?.querySelector('.react-flow__renderer') as HTMLElement;
+    const rendererElement = reactFlowWrapper.current?.querySelector('.react-flow__renderer');
     
-    if (reactFlowRenderer) {
-      try {
-        // ADJUST_CANVAS_DIMENSIONS_TO_CONTENT: Set canvas dimensions to match content bounds
-        const dataUrl = await toPng(reactFlowRenderer, {
-          backgroundColor: '#ffffff',
-          width: width,
-          height: height,
-          pixelRatio: 2, // Higher quality export
-        });
-
-        const pdf = new jsPDF({
-          orientation: width > height ? 'landscape' : 'portrait',
-          unit: 'px',
-          format: [width, height],
-        });
-
-        const img = new Image();
-        img.src = dataUrl;
-        img.onload = () => {
-          pdf.addImage(dataUrl, 'PNG', 0, 0, width, height);
-          pdf.save('diagram.pdf');
-        };
-      } catch (error) {
-        console.error('Error exporting to PDF:', error);
-        alert('Failed to export diagram to PDF. Please try again.');
-      }
-    } else {
+    if (!rendererElement || !(rendererElement instanceof HTMLElement)) {
       console.error('React Flow renderer element not found');
       alert('Failed to find diagram element. Please try again.');
+      return;
+    }
+    
+    try {
+      // ADJUST_CANVAS_DIMENSIONS_TO_CONTENT: Set canvas dimensions to match content bounds
+      const dataUrl = await toPng(rendererElement, {
+        backgroundColor: '#ffffff',
+        width: width,
+        height: height,
+        pixelRatio: 2, // Higher quality export
+      });
+
+      const pdf = new jsPDF({
+        orientation: width > height ? 'landscape' : 'portrait',
+        unit: 'px',
+        format: [width, height],
+      });
+
+      const img = new Image();
+      img.src = dataUrl;
+      img.onload = () => {
+        pdf.addImage(dataUrl, 'PNG', 0, 0, width, height);
+        pdf.save('diagram.pdf');
+      };
+    } catch (error) {
+      console.error('Error exporting to PDF:', error);
+      alert('Failed to export diagram to PDF. Please try again.');
     }
   }, [getNodes, fitView]);
 
