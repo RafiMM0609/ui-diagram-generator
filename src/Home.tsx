@@ -121,7 +121,7 @@ function FlowCanvas() {
   // Handle edge double-click to edit label
   const onEdgeDoubleClick = useCallback((_event: React.MouseEvent, edge: Edge) => {
     setEditingEdgeId(edge.id);
-    setEditingEdgeLabel((edge.label as string) || '');
+    setEditingEdgeLabel(typeof edge.label === 'string' ? edge.label : '');
   }, []);
 
   // Save the edited edge label

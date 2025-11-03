@@ -23,7 +23,7 @@ function CircleNode({ data }: NodeProps) {
           style={{
             textAlign: 'center',
             fontSize: '12px',
-            wordWrap: 'break-word',
+            overflowWrap: 'break-word',
             maxWidth: '80px',
           }}
         >

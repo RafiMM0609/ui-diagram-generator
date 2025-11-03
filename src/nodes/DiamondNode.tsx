@@ -24,7 +24,7 @@ function DiamondNode({ data }: NodeProps) {
             textAlign: 'center',
             padding: '10px',
             fontSize: '12px',
-            wordWrap: 'break-word',
+            overflowWrap: 'break-word',
             maxWidth: '80px',
           }}
         >
