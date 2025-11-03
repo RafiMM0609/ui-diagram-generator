@@ -14,6 +14,7 @@ function CustomEdge({
   targetY,
   label,
   markerEnd,
+  style = {},
 }: EdgeProps) {
   const [edgePath, labelX, labelY] = getStraightPath({
     sourceX,
@@ -22,9 +23,21 @@ function CustomEdge({
     targetY,
   });
 
+  // Enhanced edge styling for better visibility in exports
+  const edgeStyle = {
+    stroke: '#333',
+    strokeWidth: 2,
+    ...style,
+  };
+
   return (
     <>
-      <BaseEdge id={id} path={edgePath} markerEnd={markerEnd} />
+      <BaseEdge 
+        id={id} 
+        path={edgePath} 
+        markerEnd={markerEnd} 
+        style={edgeStyle}
+      />
       <EdgeLabelRenderer>
         {label && (
           <div
@@ -40,8 +53,9 @@ function CustomEdge({
               boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
               pointerEvents: 'all',
               cursor: 'pointer',
+              zIndex: 1000, // Ensure label appears above other elements
             }}
-            className="nodrag nopan"
+            className="nodrag nopan react-flow__edge-label"
           >
             {label}
           </div>

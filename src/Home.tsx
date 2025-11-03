@@ -25,7 +25,7 @@ import CustomEdge from './edges/CustomEdge';
 const NODE_POSITION_RANGE = 400;
 const NODE_POSITION_OFFSET = 100;
 // PDF Export constants
-const PDF_EXPORT_PADDING = 250;
+const PDF_EXPORT_PADDING = 150;
 const PDF_FIT_VIEW_DURATION = 200;
 const PDF_FIT_VIEW_WAIT_TIME = 300;
 // import axios from 'axios'; // Untuk memanggil backend
@@ -39,12 +39,50 @@ const initialNodes: Node[] = [
   { id: '6', type: 'oval', position: { x: 250, y: 450 }, data: { label: 'End' } },
 ];
 const initialEdges: Edge[] = [
-  { id: 'e1-2', source: '1', target: '2', type: 'custom' },
-  { id: 'e2-3', source: '2', target: '3', type: 'custom' },
-  { id: 'e3-4', source: '3', target: '4', type: 'custom', label: 'Yes' },
-  { id: 'e3-5', source: '3', target: '5', type: 'custom', label: 'No' },
-  { id: 'e4-6', source: '4', target: '6', type: 'custom' },
-  { id: 'e5-6', source: '5', target: '6', type: 'custom' },
+  { 
+    id: 'e1-2', 
+    source: '1', 
+    target: '2', 
+    type: 'custom',
+    style: { stroke: '#333', strokeWidth: 2 }
+  },
+  { 
+    id: 'e2-3', 
+    source: '2', 
+    target: '3', 
+    type: 'custom',
+    style: { stroke: '#333', strokeWidth: 2 }
+  },
+  { 
+    id: 'e3-4', 
+    source: '3', 
+    target: '4', 
+    type: 'custom', 
+    label: 'Yes',
+    style: { stroke: '#333', strokeWidth: 2 }
+  },
+  { 
+    id: 'e3-5', 
+    source: '3', 
+    target: '5', 
+    type: 'custom', 
+    label: 'No',
+    style: { stroke: '#333', strokeWidth: 2 }
+  },
+  { 
+    id: 'e4-6', 
+    source: '4', 
+    target: '6', 
+    type: 'custom',
+    style: { stroke: '#333', strokeWidth: 2 }
+  },
+  { 
+    id: 'e5-6', 
+    source: '5', 
+    target: '6', 
+    type: 'custom',
+    style: { stroke: '#333', strokeWidth: 2 }
+  },
 ];
 
 function FlowCanvas() {
@@ -76,9 +114,25 @@ function FlowCanvas() {
     custom: CustomEdge,
   }), []);
 
+  // Default edge styles for better visibility
+  const defaultEdgeOptions = useMemo(() => ({
+    type: 'custom',
+    style: {
+      stroke: '#333',
+      strokeWidth: 2,
+    },
+  }), []);
+
   // Handle connecting nodes
   const onConnect = useCallback(
-    (params: Connection) => setEdges((eds) => addEdge({ ...params, type: 'custom' }, eds)),
+    (params: Connection) => setEdges((eds) => addEdge({ 
+      ...params, 
+      type: 'custom',
+      style: {
+        stroke: '#333',
+        strokeWidth: 2,
+      },
+    }, eds)),
     [setEdges]
   );
 
@@ -213,42 +267,88 @@ function FlowCanvas() {
 
   // Export canvas to PDF
   const exportToPDF = useCallback(async () => {
-    // CALL_FIT_VIEW_BEFORE_SNAPSHOT: Temporarily adjust viewport to fit all elements
-    // This ensures all nodes and edges are visible and properly rendered before snapshot
-    await fitView({ padding: 0.2, duration: PDF_FIT_VIEW_DURATION });
-    
-    // Wait for fitView animation to complete
-    await new Promise(resolve => setTimeout(resolve, PDF_FIT_VIEW_WAIT_TIME));
-
-    // ADJUST_CANVAS_DIMENSIONS_TO_CONTENT: Calculate actual bounds of all nodes
-    const nodesBounds = getNodesBounds(getNodes());
-    
-    // Add padding to the bounds for better visual appearance
-    const width = nodesBounds.width + PDF_EXPORT_PADDING * 2;
-    const height = nodesBounds.height + PDF_EXPORT_PADDING * 2;
-
-    // SELECT_CORRECT_BOUNDING_BOX: Target the entire React Flow container
-    // This includes the viewport (edges/nodes) and the edge-labels container (rendered via portal)
-    const flowElement = reactFlowWrapper.current?.querySelector('.react-flow');
-    
-    if (!flowElement || !(flowElement instanceof HTMLElement)) {
-      console.error('React Flow element not found');
-      alert('Failed to find diagram element. Please try again.');
-      return;
-    }
-    
     try {
-      // ADJUST_CANVAS_DIMENSIONS_TO_CONTENT: Set canvas dimensions to match content bounds
-      const dataUrl = await toPng(flowElement, {
+      // CALL_FIT_VIEW_BEFORE_SNAPSHOT: Temporarily adjust viewport to fit all elements
+      // This ensures all nodes and edges are visible and properly rendered before snapshot
+      await fitView({ padding: 0.2, duration: PDF_FIT_VIEW_DURATION });
+      
+      // Wait for fitView animation to complete and ensure edges are rendered
+      await new Promise(resolve => setTimeout(resolve, PDF_FIT_VIEW_WAIT_TIME + 200));
+
+      // ADJUST_CANVAS_DIMENSIONS_TO_CONTENT: Calculate actual bounds of all nodes
+      const nodesBounds = getNodesBounds(getNodes());
+      
+      // Add padding to the bounds for better visual appearance
+      const width = nodesBounds.width + PDF_EXPORT_PADDING * 2;
+      const height = nodesBounds.height + PDF_EXPORT_PADDING * 2;
+
+      // SELECT_CORRECT_BOUNDING_BOX: Target the viewport specifically to include edges
+      // The viewport contains both nodes and edges
+      const flowElement = reactFlowWrapper.current?.querySelector('.react-flow__viewport');
+      
+      if (!flowElement || !(flowElement instanceof HTMLElement)) {
+        console.error('React Flow viewport not found, trying main container');
+        // Fallback to main container
+        const mainFlowElement = reactFlowWrapper.current?.querySelector('.react-flow');
+        if (!mainFlowElement || !(mainFlowElement instanceof HTMLElement)) {
+          console.error('React Flow element not found');
+          alert('Failed to find diagram element. Please try again.');
+          return;
+        }
+      }
+
+      // Use the viewport element or fallback to main flow element
+      const targetElement = reactFlowWrapper.current?.querySelector('.react-flow__viewport') || 
+                           reactFlowWrapper.current?.querySelector('.react-flow');
+      
+      if (!targetElement || !(targetElement instanceof HTMLElement)) {
+        console.error('No suitable React Flow element found');
+        alert('Failed to find diagram element. Please try again.');
+        return;
+      }
+      
+      // IMPROVED_FILTER: More precise filtering to preserve edges while excluding UI controls
+      const dataUrl = await toPng(targetElement, {
         backgroundColor: '#ffffff',
         width: width,
         height: height,
         pixelRatio: 2, // Higher quality export
         cacheBust: true, // Prevent caching issues
+        style: {
+          transform: 'scale(1)',
+          transformOrigin: 'top left',
+        },
         filter: (node) => {
-          // Exclude controls, minimap, and other UI elements from export
+          // Always include elements without classList (like SVG elements for edges)
           if (!node.classList) return true;
-          const exclusionClasses = ['react-flow__controls', 'react-flow__minimap', 'react-flow__background'];
+          
+          // Exclude only specific UI control elements
+          const exclusionClasses = [
+            'react-flow__controls', 
+            'react-flow__minimap',
+            'react-flow__panel',
+            'react-flow__attribution'
+          ];
+          
+          // Include background for better visual appearance
+          if (node.classList.contains('react-flow__background')) {
+            return true;
+          }
+          
+          // Explicitly include edge-related elements
+          if (node.classList.contains('react-flow__edge') || 
+              node.classList.contains('react-flow__edge-path') ||
+              node.classList.contains('react-flow__edge-text') ||
+              node.classList.contains('react-flow__edge-textbg')) {
+            return true;
+          }
+          
+          // Explicitly include node-related elements
+          if (node.classList.contains('react-flow__node') ||
+              node.classList.contains('react-flow__handle')) {
+            return true;
+          }
+          
           return !exclusionClasses.some(classname => node.classList.contains(classname));
         },
       });
@@ -270,6 +370,50 @@ function FlowCanvas() {
       alert('Failed to export diagram to PDF. Please try again.');
     }
   }, [getNodes, fitView]);
+
+  // Alternative export function as backup
+  const exportToPDFAlternative = useCallback(async () => {
+    try {
+      await fitView({ padding: 0.1, duration: 500 });
+      await new Promise(resolve => setTimeout(resolve, 800));
+
+      // Get the entire react flow container including all sub-elements
+      const reactFlowContainer = reactFlowWrapper.current;
+      
+      if (!reactFlowContainer) {
+        alert('Failed to find diagram container. Please try again.');
+        return;
+      }
+
+      const dataUrl = await toPng(reactFlowContainer, {
+        backgroundColor: '#ffffff',
+        pixelRatio: 2,
+        cacheBust: true,
+        // No filter to ensure everything is captured
+        skipFonts: true,
+        style: {
+          width: reactFlowContainer.offsetWidth + 'px',
+          height: reactFlowContainer.offsetHeight + 'px',
+        }
+      });
+
+      const pdf = new jsPDF({
+        orientation: 'landscape',
+        unit: 'px',
+        format: [reactFlowContainer.offsetWidth, reactFlowContainer.offsetHeight],
+      });
+
+      const img = new Image();
+      img.src = dataUrl;
+      img.onload = () => {
+        pdf.addImage(dataUrl, 'PNG', 0, 0, reactFlowContainer.offsetWidth, reactFlowContainer.offsetHeight);
+        pdf.save('diagram-full.pdf');
+      };
+    } catch (error) {
+      console.error('Error in alternative export:', error);
+      alert('Failed to export diagram. Please try again.');
+    }
+  }, [fitView]);
 
   // INI ADALAH FUNGSI KUNCINYA
   const handleGenerateFlow = async () => {
@@ -352,6 +496,7 @@ function FlowCanvas() {
             onSelectionChange={onSelectionChange}
             nodeTypes={nodeTypes}
             edgeTypes={edgeTypes}
+            defaultEdgeOptions={defaultEdgeOptions}
             fitView
           >
             <Controls />
@@ -443,6 +588,34 @@ function FlowCanvas() {
             >
               📄 Export PDF
             </button>
+            <button
+              onClick={exportToPDFAlternative}
+              style={{
+                backgroundColor: '#6f42c1',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '10px 20px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: '500',
+                boxShadow: '0 2px 8px rgba(111,66,193,0.3)',
+                transition: 'all 0.3s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#5a2d91';
+                e.currentTarget.style.transform = 'translateY(-1px)';
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(111,66,193,0.4)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#6f42c1';
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 2px 8px rgba(111,66,193,0.3)';
+              }}
+              title="Alternative export method if main export doesn't show edges"
+            >
+              📋 Export Full
+            </button>
           </div>
           {/* Instructions */}
           <div
@@ -459,7 +632,7 @@ function FlowCanvas() {
               zIndex: 5,
             }}
           >
-            💡 Double-click a node/edge to edit • Drag to connect nodes • Select and press Delete to remove nodes
+            💡 Double-click a node/edge to edit • Drag to connect nodes • Select and press Delete to remove nodes • Try "Export Full" if edges don't appear in PDF
           </div>
         </div>
       ) : (
