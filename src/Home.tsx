@@ -1,6 +1,16 @@
 // components/FlowCanvas.jsx
-import { useState } from 'react';
-import ReactFlow, { useNodesState, useEdgesState, type Node, type Edge } from 'reactflow';
+import { useState, useCallback } from 'react';
+import ReactFlow, { 
+  useNodesState, 
+  useEdgesState, 
+  addEdge,
+  Controls,
+  Background,
+  MiniMap,
+  type Node, 
+  type Edge,
+  type Connection
+} from 'reactflow';
 import 'reactflow/dist/style.css';
 // import axios from 'axios'; // Untuk memanggil backend
 
@@ -27,6 +37,64 @@ function FlowCanvas() {
   const [prompt, setPrompt] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showBubble, setShowBubble] = useState(false);
+  const [nodeIdCounter, setNodeIdCounter] = useState(7); // Start from 7 since we have 6 initial nodes
+  const [editingNodeId, setEditingNodeId] = useState<string | null>(null);
+  const [editingLabel, setEditingLabel] = useState("");
+
+  // Handle connecting nodes
+  const onConnect = useCallback(
+    (params: Connection) => setEdges((eds) => addEdge(params, eds)),
+    [setEdges]
+  );
+
+  // Add a new node
+  const addNode = useCallback(() => {
+    const newNode: Node = {
+      id: nodeIdCounter.toString(),
+      type: 'default',
+      position: { 
+        x: Math.random() * 400 + 100, 
+        y: Math.random() * 400 + 100 
+      },
+      data: { label: `Node ${nodeIdCounter}` },
+    };
+    setNodes((nds) => [...nds, newNode]);
+    setNodeIdCounter((id) => id + 1);
+  }, [nodeIdCounter, setNodes]);
+
+  // Handle node double-click to edit label
+  const onNodeDoubleClick = useCallback((_event: React.MouseEvent, node: Node) => {
+    setEditingNodeId(node.id);
+    setEditingLabel(node.data.label as string);
+  }, []);
+
+  // Save the edited label
+  const saveNodeLabel = useCallback(() => {
+    if (editingNodeId) {
+      setNodes((nds) =>
+        nds.map((node) => {
+          if (node.id === editingNodeId) {
+            return {
+              ...node,
+              data: {
+                ...node.data,
+                label: editingLabel,
+              },
+            };
+          }
+          return node;
+        })
+      );
+      setEditingNodeId(null);
+      setEditingLabel("");
+    }
+  }, [editingNodeId, editingLabel, setNodes]);
+
+  // Cancel editing
+  const cancelEdit = useCallback(() => {
+    setEditingNodeId(null);
+    setEditingLabel("");
+  }, []);
 
   // INI ADALAH FUNGSI KUNCINYA
   const handleGenerateFlow = async () => {
@@ -103,8 +171,63 @@ function FlowCanvas() {
             edges={edges}
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
+            onConnect={onConnect}
+            onNodeDoubleClick={onNodeDoubleClick}
             fitView
-          />
+          >
+            <Controls />
+            <MiniMap />
+            <Background gap={12} size={1} />
+          </ReactFlow>
+          {/* Add Node Button */}
+          <button
+            onClick={addNode}
+            style={{
+              position: 'absolute',
+              top: '20px',
+              left: '20px',
+              backgroundColor: '#28a745',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '10px 20px',
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: '500',
+              boxShadow: '0 2px 8px rgba(40,167,69,0.3)',
+              zIndex: 5,
+              transition: 'all 0.3s ease',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#218838';
+              e.currentTarget.style.transform = 'translateY(-1px)';
+              e.currentTarget.style.boxShadow = '0 4px 12px rgba(40,167,69,0.4)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = '#28a745';
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = '0 2px 8px rgba(40,167,69,0.3)';
+            }}
+          >
+            ➕ Add Node
+          </button>
+          {/* Instructions */}
+          <div
+            style={{
+              position: 'absolute',
+              top: '20px',
+              right: '100px',
+              backgroundColor: 'white',
+              borderRadius: '8px',
+              padding: '10px 15px',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+              fontSize: '12px',
+              color: '#666',
+              zIndex: 5,
+            }}
+          >
+            💡 Double-click a node to edit text • Drag to connect nodes
+          </div>
         </div>
       ) : (
         <div style={{
@@ -133,6 +256,85 @@ function FlowCanvas() {
           }}>
             Generating your diagram...
           </p>
+        </div>
+      )}
+      {/* Edit Node Modal */}
+      {editingNodeId && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 2000,
+          }}
+          onClick={cancelEdit}
+        >
+          <div
+            style={{
+              backgroundColor: 'white',
+              borderRadius: '12px',
+              padding: '25px',
+              boxShadow: '0 10px 40px rgba(0,0,0,0.3)',
+              minWidth: '300px',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 style={{ marginTop: 0, marginBottom: '15px', fontSize: '18px' }}>
+              Edit Node Label
+            </h3>
+            <input
+              type="text"
+              value={editingLabel}
+              onChange={(e) => setEditingLabel(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && saveNodeLabel()}
+              autoFocus
+              style={{
+                width: '100%',
+                padding: '10px',
+                fontSize: '14px',
+                border: '1px solid #ddd',
+                borderRadius: '6px',
+                marginBottom: '15px',
+                boxSizing: 'border-box',
+              }}
+            />
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+              <button
+                onClick={cancelEdit}
+                style={{
+                  backgroundColor: '#6c757d',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  padding: '8px 16px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={saveNodeLabel}
+                style={{
+                  backgroundColor: '#007bff',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  padding: '8px 16px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                }}
+              >
+                Save
+              </button>
+            </div>
+          </div>
         </div>
       )}
       {showBubble && (
