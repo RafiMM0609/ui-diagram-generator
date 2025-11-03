@@ -466,9 +466,9 @@ function FlowCanvas() {
                 <option value="circle">Circle</option>
               </select>
             </div>
-            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'space-between' }}>
               <button
-                onClick={() => deleteNode(editingNodeId)}
+                onClick={() => editingNodeId && deleteNode(editingNodeId)}
                 style={{
                   backgroundColor: '#dc3545',
                   color: 'white',
@@ -487,35 +487,36 @@ function FlowCanvas() {
               >
                 Delete
               </button>
-              <div style={{ flex: 1 }}></div>
-              <button
-                onClick={cancelEdit}
-                style={{
-                  backgroundColor: '#6c757d',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  padding: '8px 16px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={saveNodeLabel}
-                style={{
-                  backgroundColor: '#007bff',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  padding: '8px 16px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                }}
-              >
-                Save
-              </button>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button
+                  onClick={cancelEdit}
+                  style={{
+                    backgroundColor: '#6c757d',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '6px',
+                    padding: '8px 16px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={saveNodeLabel}
+                  style={{
+                    backgroundColor: '#007bff',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '6px',
+                    padding: '8px 16px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                  }}
+                >
+                  Save
+                </button>
+              </div>
             </div>
           </div>
         </div>
