@@ -7,24 +7,26 @@ function CircleNode({ data }: NodeProps) {
       <Handle type="target" position={Position.Top} />
       <div
         style={{
-          width: '100px',
-          height: '100px',
-          background: '#fff',
-          border: '2px solid #555',
+          width: '110px',
+          height: '110px',
+          background: 'linear-gradient(135deg, #ffffff 0%, #fef5e7 100%)',
+          border: '2px solid #ffc107',
           borderRadius: '50%',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           padding: '10px',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+          boxShadow: '0 4px 12px rgba(255, 193, 7, 0.2)',
         }}
       >
         <div
           style={{
             textAlign: 'center',
-            fontSize: '12px',
+            fontSize: '13px',
+            fontWeight: '500',
+            color: '#333',
             overflowWrap: 'break-word',
-            maxWidth: '80px',
+            maxWidth: '90px',
           }}
         >
           {data.label}

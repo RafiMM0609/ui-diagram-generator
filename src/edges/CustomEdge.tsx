@@ -2,7 +2,7 @@ import { memo } from 'react';
 import {
   BaseEdge,
   EdgeLabelRenderer,
-  getStraightPath,
+  getBezierPath,
   type EdgeProps,
 } from 'reactflow';
 
@@ -12,26 +12,41 @@ function CustomEdge({
   sourceY,
   targetX,
   targetY,
+  sourcePosition,
+  targetPosition,
   label,
   markerEnd,
   style = {},
 }: EdgeProps) {
-  const [edgePath, labelX, labelY] = getStraightPath({
+  const [edgePath, labelX, labelY] = getBezierPath({
     sourceX,
     sourceY,
+    sourcePosition,
     targetX,
     targetY,
+    targetPosition,
   });
 
-  // Enhanced edge styling for better visibility in exports
+  // Enhanced edge styling with animation for better visibility
   const edgeStyle = {
-    stroke: '#333',
+    stroke: '#4a90e2',
     strokeWidth: 2,
+    strokeDasharray: '5,5',
+    animation: 'dashdraw 0.5s linear infinite',
     ...style,
   };
 
   return (
     <>
+      <defs>
+        <style>{`
+          @keyframes dashdraw {
+            to {
+              stroke-dashoffset: -10;
+            }
+          }
+        `}</style>
+      </defs>
       <BaseEdge 
         id={id} 
         path={edgePath} 
@@ -53,7 +68,7 @@ function CustomEdge({
               boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
               pointerEvents: 'all',
               cursor: 'pointer',
-              zIndex: 1000, // Ensure label appears above other elements
+              zIndex: 1000,
             }}
             className="nodrag nopan react-flow__edge-label"
           >
