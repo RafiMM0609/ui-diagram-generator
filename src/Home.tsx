@@ -227,23 +227,30 @@ function FlowCanvas() {
     const width = nodesBounds.width + PDF_EXPORT_PADDING * 2;
     const height = nodesBounds.height + PDF_EXPORT_PADDING * 2;
 
-    // SELECT_CORRECT_BOUNDING_BOX: Target the React Flow renderer element specifically
-    // This is the element that contains the actual diagram
-    const rendererElement = reactFlowWrapper.current?.querySelector('.react-flow__renderer');
+    // SELECT_CORRECT_BOUNDING_BOX: Target the entire React Flow container
+    // This includes the viewport (edges/nodes) and the edge-labels container (rendered via portal)
+    const flowElement = reactFlowWrapper.current?.querySelector('.react-flow');
     
-    if (!rendererElement || !(rendererElement instanceof HTMLElement)) {
-      console.error('React Flow renderer element not found');
+    if (!flowElement || !(flowElement instanceof HTMLElement)) {
+      console.error('React Flow element not found');
       alert('Failed to find diagram element. Please try again.');
       return;
     }
     
     try {
       // ADJUST_CANVAS_DIMENSIONS_TO_CONTENT: Set canvas dimensions to match content bounds
-      const dataUrl = await toPng(rendererElement, {
+      const dataUrl = await toPng(flowElement, {
         backgroundColor: '#ffffff',
         width: width,
         height: height,
         pixelRatio: 2, // Higher quality export
+        cacheBust: true, // Prevent caching issues
+        filter: (node) => {
+          // Exclude controls, minimap, and other UI elements from export
+          if (!node.classList) return true;
+          const exclusionClasses = ['react-flow__controls', 'react-flow__minimap', 'react-flow__background'];
+          return !exclusionClasses.some(classname => node.classList.contains(classname));
+        },
       });
 
       const pdf = new jsPDF({
