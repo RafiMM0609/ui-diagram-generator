@@ -565,11 +565,12 @@ function FlowCanvas() {
       }
       
       // 1. Kirim prompt ke backend Anda (bukan ke AI langsung)
-      const response = await fetch(`http://127.0.0.1:3000/api/generate/flow?promp=${encodeURIComponent(finalPrompt)}`, {
-        method: 'GET',
+      const response = await fetch(`http://127.0.0.1:3000/api/generate/flow`, {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
+        body: JSON.stringify({ promp: finalPrompt }),
       });
       if (!response.ok) {
         throw new Error("Network Error");
