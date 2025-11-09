@@ -39,6 +39,33 @@ const initialNodes: Node[] = [
   { id: '4', type: 'diamond', position: { x: 150, y: 460 }, data: { label: 'Decision' } },
   { id: '5', type: 'default', position: { x: 450, y: 490 }, data: { label: 'Output' }, style: { background: 'linear-gradient(135deg, #ffffff 0%, #e3f2fd 100%)', border: '2px solid #2196f3', padding: '12px 20px', borderRadius: '8px', fontWeight: '500', boxShadow: '0 4px 12px rgba(33, 150, 243, 0.2)' } },
   { id: '6', type: 'oval', position: { x: 300, y: 630 }, data: { label: 'End' } },
+  // ERD Example Nodes
+  { 
+    id: 'erd-1', 
+    type: 'tableNode', 
+    position: { x: 800, y: 100 }, 
+    data: { 
+      tableName: 'users',
+      columns: [
+        { id: 'col-u1', name: 'id', type: 'INT', isPK: true, isFK: false },
+        { id: 'col-u2', name: 'username', type: 'VARCHAR', isPK: false, isFK: false },
+        { id: 'col-u3', name: 'email', type: 'VARCHAR', isPK: false, isFK: false },
+      ]
+    }
+  },
+  { 
+    id: 'erd-2', 
+    type: 'tableNode', 
+    position: { x: 800, y: 400 }, 
+    data: { 
+      tableName: 'profiles',
+      columns: [
+        { id: 'col-p1', name: 'id', type: 'INT', isPK: true, isFK: false },
+        { id: 'col-p2', name: 'user_id', type: 'INT', isPK: false, isFK: true },
+        { id: 'col-p3', name: 'bio', type: 'TEXT', isPK: false, isFK: false },
+      ]
+    }
+  },
 ];
 const initialEdges: Edge[] = [
   { 
@@ -90,6 +117,16 @@ const initialEdges: Edge[] = [
     type: 'custom',
     style: { stroke: '#4a90e2', strokeWidth: 2 },
     animated: true
+  },
+  // ERD Example Edge - Column-level relationship
+  { 
+    id: 'erd-e1', 
+    source: 'erd-1',
+    sourceHandle: 'col-u1-src',
+    target: 'erd-2',
+    targetHandle: 'col-p2-tgt',
+    type: 'relationship',
+    data: { relationship: '1:N' },
   },
 ];
 
