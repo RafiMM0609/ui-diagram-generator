@@ -15,12 +15,13 @@ import ReactFlow, {
 } from 'reactflow';
 import { toPng } from 'html-to-image';
 import { jsPDF } from 'jspdf';
-import ExcelJS from 'exceljs';
 import 'reactflow/dist/style.css';
 import DiamondNode from './nodes/DiamondNode';
 import OvalNode from './nodes/OvalNode';
 import CircleNode from './nodes/CircleNode';
+import TableNode from './nodes/TableNode';
 import CustomEdge from './edges/CustomEdge';
+import RelationshipEdge from './edges/RelationshipEdge';
 
 // Constants for node positioning
 const NODE_POSITION_RANGE = 400;
@@ -107,8 +108,6 @@ function FlowCanvas() {
   const [editingEdgeId, setEditingEdgeId] = useState<string | null>(null);
   const [editingEdgeLabel, setEditingEdgeLabel] = useState("");
   const [selectedNodes, setSelectedNodes] = useState<Node[]>([]);
-  const [isExcelSelectMode, setIsExcelSelectMode] = useState(false);
-  const [selectedNodesForExcel, setSelectedNodesForExcel] = useState<Set<string>>(new Set());
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [generateCount, setGenerateCount] = useState(0);
   const { getNodes, fitView } = useReactFlow();
@@ -118,11 +117,13 @@ function FlowCanvas() {
     diamond: DiamondNode,
     oval: OvalNode,
     circle: CircleNode,
+    tableNode: TableNode,
   }), []);
 
   // Define custom edge types
   const edgeTypes = useMemo(() => ({
     custom: CustomEdge,
+    relationship: RelationshipEdge,
   }), []);
 
   // Default edge styles for better visibility with animation
@@ -151,6 +152,23 @@ function FlowCanvas() {
 
   // Add a new node
   const addNode = useCallback(() => {
+    let nodeData;
+    
+    // If adding a table node, create sample table data structure
+    if (selectedNodeType === 'tableNode') {
+      nodeData = {
+        tableName: `table_${nodeIdCounter}`,
+        columns: [
+          { id: `col-${nodeIdCounter}-1`, name: 'id', type: 'INT', isPK: true, isFK: false },
+          { id: `col-${nodeIdCounter}-2`, name: 'name', type: 'VARCHAR', isPK: false, isFK: false },
+          { id: `col-${nodeIdCounter}-3`, name: 'created_at', type: 'TIMESTAMP', isPK: false, isFK: false },
+        ]
+      };
+    } else {
+      // For other node types, use simple label
+      nodeData = { label: `Node ${nodeIdCounter}` };
+    }
+
     const newNode: Node = {
       id: nodeIdCounter.toString(),
       type: selectedNodeType,
@@ -158,7 +176,7 @@ function FlowCanvas() {
         x: Math.random() * NODE_POSITION_RANGE + NODE_POSITION_OFFSET, 
         y: Math.random() * NODE_POSITION_RANGE + NODE_POSITION_OFFSET 
       },
-      data: { label: `Node ${nodeIdCounter}` },
+      data: nodeData,
     };
     setNodes((nds) => [...nds, newNode]);
     setNodeIdCounter((id) => id + 1);
@@ -428,127 +446,6 @@ function FlowCanvas() {
     }
   }, [fitView]);
 
-  // Toggle Excel selection mode
-  const toggleExcelSelectMode = useCallback(() => {
-    setIsExcelSelectMode(prev => !prev);
-    if (isExcelSelectMode) {
-      // If exiting selection mode, clear selections
-      setSelectedNodesForExcel(new Set());
-    }
-  }, [isExcelSelectMode]);
-
-  // Handle node click in Excel selection mode
-  const handleNodeClickForExcel = useCallback((event: React.MouseEvent, node: Node) => {
-    if (isExcelSelectMode) {
-      event.stopPropagation();
-      setSelectedNodesForExcel(prev => {
-        const newSet = new Set(prev);
-        if (newSet.has(node.id)) {
-          newSet.delete(node.id);
-        } else {
-          newSet.add(node.id);
-        }
-        return newSet;
-      });
-    }
-  }, [isExcelSelectMode]);
-
-  // Export selected nodes to Excel
-  const exportToExcel = useCallback(async () => {
-    try {
-      const workbook = new ExcelJS.Workbook();
-      const worksheet = workbook.addWorksheet('Diagram Data');
-
-      // Get selected nodes or all nodes if none selected
-      const nodesToExport = selectedNodesForExcel.size > 0 
-        ? nodes.filter(node => selectedNodesForExcel.has(node.id))
-        : nodes;
-
-      // Get edges related to selected nodes
-      const nodeIds = new Set(nodesToExport.map(n => n.id));
-      const edgesToExport = edges.filter(edge => 
-        nodeIds.has(edge.source) && nodeIds.has(edge.target)
-      );
-
-      // Add headers for nodes
-      worksheet.addRow(['NODES']);
-      worksheet.addRow(['ID', 'Type', 'Label', 'Position X', 'Position Y']);
-      
-      // Style header
-      worksheet.getRow(2).font = { bold: true };
-      worksheet.getRow(2).fill = {
-        type: 'pattern',
-        pattern: 'solid',
-        fgColor: { argb: 'FF4A90E2' }
-      };
-
-      // Add node data
-      nodesToExport.forEach(node => {
-        worksheet.addRow([
-          node.id,
-          node.type || 'default',
-          node.data.label as string,
-          node.position.x,
-          node.position.y
-        ]);
-      });
-
-      // Add spacing
-      worksheet.addRow([]);
-
-      // Add headers for edges
-      const edgeStartRow = worksheet.rowCount + 1;
-      worksheet.addRow(['EDGES']);
-      worksheet.addRow(['ID', 'Source', 'Target', 'Label']);
-      
-      // Style header
-      worksheet.getRow(edgeStartRow + 1).font = { bold: true };
-      worksheet.getRow(edgeStartRow + 1).fill = {
-        type: 'pattern',
-        pattern: 'solid',
-        fgColor: { argb: 'FF28A745' }
-      };
-
-      // Add edge data
-      edgesToExport.forEach(edge => {
-        worksheet.addRow([
-          edge.id,
-          edge.source,
-          edge.target,
-          typeof edge.label === 'string' ? edge.label : ''
-        ]);
-      });
-
-      // Auto-fit columns
-      worksheet.columns.forEach(column => {
-        column.width = 15;
-      });
-
-      // Generate Excel file
-      const buffer = await workbook.xlsx.writeBuffer();
-      const blob = new Blob([buffer], { 
-        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
-      });
-      
-      // Download file
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `diagram-${selectedNodesForExcel.size > 0 ? 'selected' : 'all'}-${Date.now()}.xlsx`;
-      link.click();
-      window.URL.revokeObjectURL(url);
-
-      // Exit selection mode and clear selections
-      setIsExcelSelectMode(false);
-      setSelectedNodesForExcel(new Set());
-      
-      alert(`Exported ${nodesToExport.length} nodes and ${edgesToExport.length} edges to Excel!`);
-    } catch (error) {
-      console.error('Error exporting to Excel:', error);
-      alert('Failed to export to Excel. Please try again.');
-    }
-  }, [nodes, edges, selectedNodesForExcel]);
-
   // INI ADALAH FUNGSI KUNCINYA
   const handleGenerateFlow = async () => {
     if (!prompt.trim()) return; // Don't submit empty prompts
@@ -557,7 +454,7 @@ function FlowCanvas() {
     try {
       // Add current prompt to history
       setPromptHistory(prev => [...prev, prompt]);
-      var finalPrompt = prompt;
+      let finalPrompt = prompt;
       if (generateCount > 0) {
         // Modify prompt to include existing flow context
         const existingFlowSummary = `This is the existing flow chart data in JSON format: ${JSON.stringify({ nodes, edges })}. Please update the flow chart based on the new prompt: "${prompt}". Ensure continuity and coherence with the existing structure.`;
@@ -636,24 +533,11 @@ function FlowCanvas() {
       {!isLoading ? (
         <div ref={reactFlowWrapper} style={{ height: '100%', width: '100%' }}>
           <ReactFlow
-            nodes={nodes.map(node => ({
-              ...node,
-              style: {
-                ...node.style,
-                ...(isExcelSelectMode && selectedNodesForExcel.has(node.id) ? {
-                  boxShadow: '0 0 0 3px #ff6b6b',
-                  opacity: 1
-                } : {}),
-                ...(isExcelSelectMode && !selectedNodesForExcel.has(node.id) ? {
-                  opacity: 0.5
-                } : {})
-              }
-            }))}
+            nodes={nodes}
             edges={edges}
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
-            onNodeClick={handleNodeClickForExcel}
             onNodeDoubleClick={onNodeDoubleClick}
             onEdgeDoubleClick={onEdgeDoubleClick}
             onSelectionChange={onSelectionChange}
@@ -758,6 +642,26 @@ function FlowCanvas() {
             >
               <div style={{ fontSize: '14px', fontWeight: '500', marginBottom: '5px' }}>⚫ Circle</div>
               <div style={{ fontSize: '11px', color: '#666' }}>For connectors</div>
+            </div>
+
+            {/* Divider for ERD Section */}
+            <div style={{ borderTop: '2px solid #ddd', margin: '15px 0' }}></div>
+
+            {/* Table Node (ERD) */}
+            <div
+              onClick={() => setSelectedNodeType('tableNode')}
+              style={{
+                padding: '12px',
+                backgroundColor: selectedNodeType === 'tableNode' ? '#f3e8ff' : 'white',
+                border: selectedNodeType === 'tableNode' ? '2px solid #6c5ce7' : '2px solid #ddd',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                boxShadow: selectedNodeType === 'tableNode' ? '0 4px 8px rgba(108, 92, 231, 0.2)' : '0 2px 4px rgba(0,0,0,0.1)',
+              }}
+            >
+              <div style={{ fontSize: '14px', fontWeight: '500', marginBottom: '5px' }}>📊 Database Table</div>
+              <div style={{ fontSize: '11px', color: '#666' }}>For ERD diagrams</div>
             </div>
 
             {/* Add Node Button */}
