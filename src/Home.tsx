@@ -160,6 +160,9 @@ function FlowCanvas() {
     isPK: boolean;
     isFK: boolean;
   }>>([]);
+  
+  // State for sidebar visibility
+  const [isSidebarVisible, setIsSidebarVisible] = useState<boolean>(true);
 
   // Define custom node types
   const nodeTypes = useMemo(() => ({
@@ -790,7 +793,7 @@ function FlowCanvas() {
             style={{
               position: 'absolute',
               top: '0',
-              left: '0',
+              left: isSidebarVisible ? '0' : '-260px',
               width: '260px',
               height: '100%',
               backgroundColor: '#f8f9fa',
@@ -802,6 +805,7 @@ function FlowCanvas() {
               flexDirection: 'column',
               gap: '12px',
               overflowY: 'auto',
+              transition: 'left 0.3s ease-in-out',
             }}
           >
             <h3 style={{ margin: '0 0 10px 0', fontSize: '18px', fontWeight: '700', color: '#333', letterSpacing: '0.5px' }}>
@@ -1023,6 +1027,7 @@ function FlowCanvas() {
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '10px',
+                marginBottom: '10px',
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.backgroundColor = '#e0a800';
@@ -1038,19 +1043,8 @@ function FlowCanvas() {
               <span style={{ fontSize: '20px' }}>📂</span>
               <span>Import JSON</span>
             </button>
-          </div>
-          {/* Top Export Buttons */}
-          <div
-            style={{
-              position: 'absolute',
-              top: '20px',
-              left: '280px',
-              display: 'flex',
-              gap: '10px',
-              alignItems: 'center',
-              zIndex: 5,
-            }}
-          >
+
+            {/* Export to PDF Button */}
             <button
               onClick={exportToPDF}
               style={{
@@ -1058,7 +1052,7 @@ function FlowCanvas() {
                 color: 'white',
                 border: 'none',
                 borderRadius: '8px',
-                padding: '12px 24px',
+                padding: '14px 20px',
                 cursor: 'pointer',
                 fontSize: '15px',
                 fontWeight: '600',
@@ -1066,11 +1060,13 @@ function FlowCanvas() {
                 transition: 'all 0.3s ease',
                 display: 'flex',
                 alignItems: 'center',
+                justifyContent: 'center',
                 gap: '10px',
+                marginBottom: '10px',
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.backgroundColor = '#c82333';
-                e.currentTarget.style.transform = 'translateY(-1px)';
+                e.currentTarget.style.transform = 'translateY(-2px)';
                 e.currentTarget.style.boxShadow = '0 4px 12px rgba(220,53,69,0.4)';
               }}
               onMouseLeave={(e) => {
@@ -1082,6 +1078,8 @@ function FlowCanvas() {
               <span style={{ fontSize: '20px' }}>📄</span>
               <span>Export PDF</span>
             </button>
+
+            {/* Export Full PDF Button */}
             <button
               onClick={exportToPDFAlternative}
               style={{
@@ -1089,7 +1087,7 @@ function FlowCanvas() {
                 color: 'white',
                 border: 'none',
                 borderRadius: '8px',
-                padding: '12px 24px',
+                padding: '14px 20px',
                 cursor: 'pointer',
                 fontSize: '15px',
                 fontWeight: '600',
@@ -1097,11 +1095,12 @@ function FlowCanvas() {
                 transition: 'all 0.3s ease',
                 display: 'flex',
                 alignItems: 'center',
+                justifyContent: 'center',
                 gap: '10px',
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.backgroundColor = '#5a2d91';
-                e.currentTarget.style.transform = 'translateY(-1px)';
+                e.currentTarget.style.transform = 'translateY(-2px)';
                 e.currentTarget.style.boxShadow = '0 4px 12px rgba(111,66,193,0.4)';
               }}
               onMouseLeave={(e) => {
@@ -1114,82 +1113,44 @@ function FlowCanvas() {
               <span style={{ fontSize: '20px' }}>📋</span>
               <span>Export Full</span>
             </button>
-            {/* <button
-              onClick={toggleExcelSelectMode}
-              style={{
-                backgroundColor: isExcelSelectMode ? '#ff6b6b' : '#17a2b8',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                padding: '10px 20px',
-                cursor: 'pointer',
-                fontSize: '14px',
-                fontWeight: '500',
-                boxShadow: isExcelSelectMode ? '0 2px 8px rgba(255,107,107,0.3)' : '0 2px 8px rgba(23,162,184,0.3)',
-                transition: 'all 0.3s ease',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = isExcelSelectMode ? '#ff5252' : '#138496';
-                e.currentTarget.style.transform = 'translateY(-1px)';
-                e.currentTarget.style.boxShadow = isExcelSelectMode ? '0 4px 12px rgba(255,107,107,0.4)' : '0 4px 12px rgba(23,162,184,0.4)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = isExcelSelectMode ? '#ff6b6b' : '#17a2b8';
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = isExcelSelectMode ? '0 2px 8px rgba(255,107,107,0.3)' : '0 2px 8px rgba(23,162,184,0.3)';
-              }}
-              title={isExcelSelectMode ? 'Exit selection mode' : 'Select nodes to export to Excel'}
-            >
-              {isExcelSelectMode ? '✖ Cancel' : '📊 Select for Excel'}
-            </button> */}
-            {/* {(isExcelSelectMode || selectedNodesForExcel.size > 0) && (
-              <button
-                onClick={exportToExcel}
-                style={{
-                  backgroundColor: '#20c997',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  padding: '10px 20px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  boxShadow: '0 2px 8px rgba(32,201,151,0.3)',
-                  transition: 'all 0.3s ease',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#1aa179';
-                  e.currentTarget.style.transform = 'translateY(-1px)';
-                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(32,201,151,0.4)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = '#20c997';
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = '0 2px 8px rgba(32,201,151,0.3)';
-                }}
-                title={`Export ${selectedNodesForExcel.size > 0 ? selectedNodesForExcel.size + ' selected' : 'all'} nodes to Excel`}
-              >
-                📑 Export {selectedNodesForExcel.size > 0 ? `(${selectedNodesForExcel.size})` : 'All'} to Excel
-              </button>
-            )} */}
           </div>
-          {/* Instructions */}
-          {/* <div
+
+          {/* Sidebar Toggle Button */}
+          <button
+            onClick={() => setIsSidebarVisible(!isSidebarVisible)}
             style={{
               position: 'absolute',
               top: '20px',
-              right: '100px',
-              backgroundColor: 'white',
+              left: isSidebarVisible ? '270px' : '10px',
+              backgroundColor: '#007bff',
+              color: 'white',
+              border: 'none',
               borderRadius: '8px',
-              padding: '10px 15px',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-              fontSize: '12px',
-              color: '#666',
-              zIndex: 5,
+              padding: '12px 16px',
+              cursor: 'pointer',
+              fontSize: '20px',
+              fontWeight: '600',
+              boxShadow: '0 2px 8px rgba(0,123,255,0.3)',
+              transition: 'all 0.3s ease',
+              zIndex: 6,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#0056b3';
+              e.currentTarget.style.transform = 'scale(1.05)';
+              e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,123,255,0.4)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = '#007bff';
+              e.currentTarget.style.transform = 'scale(1)';
+              e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,123,255,0.3)';
+            }}
+            title={isSidebarVisible ? 'Hide Sidebar' : 'Show Sidebar'}
           >
-            💡 Double-click a node/edge to edit • Drag to connect nodes • Select and press Delete to remove nodes{isExcelSelectMode ? ' • Click nodes to select/deselect for Excel export' : ' • Use "Select for Excel" to choose specific nodes to export'}
-          </div> */}
+            {isSidebarVisible ? '◀' : '▶'}
+          </button>
         </div>
       ) : (
         <div style={{
