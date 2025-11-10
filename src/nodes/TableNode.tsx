@@ -37,9 +37,13 @@ function TableNode({ data }: NodeProps<TableNodeData>) {
           fontWeight: '600',
           fontSize: '15px',
           borderBottom: '2px solid #5f4dd1',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
         }}
       >
-        📊 {data.tableName}
+        <span style={{ fontSize: '18px' }}>📊</span>
+        <span>{data.tableName}</span>
       </div>
 
       {/* Table Body - Columns List */}
@@ -76,15 +80,16 @@ function TableNode({ data }: NodeProps<TableNodeData>) {
             {/* Column Content */}
             <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '8px' }}>
               {/* Key Indicators */}
-              <div style={{ minWidth: '40px', display: 'flex', gap: '4px' }}>
+              <div style={{ minWidth: '45px', display: 'flex', gap: '6px', alignItems: 'center' }}>
                 {column.isPK && (
                   <span 
                     title="Primary Key"
                     style={{ 
-                      fontSize: '12px',
+                      fontSize: '16px',
                       fontWeight: 'bold',
                       color: '#ffd700',
                       textShadow: '0 0 2px rgba(0,0,0,0.5)',
+                      lineHeight: '1',
                     }}
                   >
                     🔑
@@ -94,9 +99,10 @@ function TableNode({ data }: NodeProps<TableNodeData>) {
                   <span 
                     title="Foreign Key"
                     style={{ 
-                      fontSize: '12px',
+                      fontSize: '16px',
                       fontWeight: 'bold',
                       color: '#4a90e2',
+                      lineHeight: '1',
                     }}
                   >
                     🔗
