@@ -145,6 +145,7 @@ function FlowCanvas() {
   const [editingEdgeId, setEditingEdgeId] = useState<string | null>(null);
   const [editingEdgeLabel, setEditingEdgeLabel] = useState("");
   const [selectedNodes, setSelectedNodes] = useState<Node[]>([]);
+  const [selectedEdges, setSelectedEdges] = useState<Edge[]>([]);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [generateCount, setGenerateCount] = useState(0);
   const { getNodes, fitView } = useReactFlow();
@@ -387,6 +388,13 @@ function FlowCanvas() {
     setEditingEdgeLabel("");
   }, []);
 
+  // Delete a specific edge
+  const deleteEdge = useCallback((edgeId: string) => {
+    setEdges((eds) => eds.filter((edge) => edge.id !== edgeId));
+    setEditingEdgeId(null);
+    setEditingEdgeLabel("");
+  }, [setEdges]);
+
   // Delete selected nodes
   const deleteSelectedNodes = useCallback(() => {
     if (selectedNodes.length > 0) {
@@ -399,6 +407,15 @@ function FlowCanvas() {
       setSelectedNodes([]);
     }
   }, [selectedNodes, setNodes, setEdges]);
+
+  // Delete selected edges
+  const deleteSelectedEdges = useCallback(() => {
+    if (selectedEdges.length > 0) {
+      const edgeIdsToDelete = selectedEdges.map(edge => edge.id);
+      setEdges((eds) => eds.filter((edge) => !edgeIdsToDelete.includes(edge.id)));
+      setSelectedEdges([]);
+    }
+  }, [selectedEdges, setEdges]);
 
   // Delete a specific node (for use in the edit modal)
   const deleteNode = useCallback((nodeId: string) => {
@@ -414,14 +431,16 @@ function FlowCanvas() {
 
   // Handle keyboard events for deletion
   const onKeyDown = useCallback((event: KeyboardEvent) => {
-    if ((event.key === 'Delete' || event.key === 'Backspace') && !editingNodeId && !editingEdgeId) {
+    if ((event.key === 'Delete' || event.key === 'Backspace') && !editingNodeId && !editingEdgeId && !editingTableNodeId) {
       deleteSelectedNodes();
+      deleteSelectedEdges();
     }
-  }, [deleteSelectedNodes, editingNodeId, editingEdgeId]);
+  }, [deleteSelectedNodes, deleteSelectedEdges, editingNodeId, editingEdgeId, editingTableNodeId]);
 
-  // Track selected nodes
-  const onSelectionChange = useCallback(({ nodes }: { nodes: Node[] }) => {
+  // Track selected nodes and edges
+  const onSelectionChange = useCallback(({ nodes, edges }: { nodes: Node[], edges: Edge[] }) => {
     setSelectedNodes(nodes);
+    setSelectedEdges(edges);
   }, []);
 
   // Set up keyboard event listener
@@ -1333,33 +1352,11 @@ function FlowCanvas() {
                 e.currentTarget.style.borderColor = '#e0e0e0';
               }}
             />
-            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'space-between' }}>
               <button
-                onClick={cancelEdgeEdit}
+                onClick={() => editingEdgeId && deleteEdge(editingEdgeId)}
                 style={{
-                  backgroundColor: '#f5f5f5',
-                  color: '#333',
-                  border: '1px solid #ddd',
-                  borderRadius: '8px',
-                  padding: '10px 20px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  transition: 'all 0.2s',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#e8e8e8';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = '#f5f5f5';
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={saveEdgeLabel}
-                style={{
-                  backgroundColor: '#007bff',
+                  backgroundColor: '#dc3545',
                   color: 'white',
                   border: 'none',
                   borderRadius: '8px',
@@ -1370,14 +1367,60 @@ function FlowCanvas() {
                   transition: 'all 0.2s',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#0056b3';
+                  e.currentTarget.style.backgroundColor = '#c82333';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = '#007bff';
+                  e.currentTarget.style.backgroundColor = '#dc3545';
                 }}
               >
-                Save Label
+                Delete
               </button>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button
+                  onClick={cancelEdgeEdit}
+                  style={{
+                    backgroundColor: '#f5f5f5',
+                    color: '#333',
+                    border: '1px solid #ddd',
+                    borderRadius: '8px',
+                    padding: '10px 20px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    transition: 'all 0.2s',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = '#e8e8e8';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = '#f5f5f5';
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={saveEdgeLabel}
+                  style={{
+                    backgroundColor: '#007bff',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '10px 20px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    transition: 'all 0.2s',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = '#0056b3';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = '#007bff';
+                  }}
+                >
+                  Save Label
+                </button>
+              </div>
             </div>
           </div>
         </div>
