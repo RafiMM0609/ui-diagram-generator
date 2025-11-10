@@ -582,6 +582,86 @@ function FlowCanvas() {
     }
   }, [fitView]);
 
+  // Export canvas to JSON
+  const exportToJSON = useCallback(() => {
+    try {
+      const flowData = {
+        nodes,
+        edges,
+        exportedAt: new Date().toISOString(),
+        version: '1.0',
+      };
+      
+      const dataStr = JSON.stringify(flowData, null, 2);
+      const dataBlob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(dataBlob);
+      
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `diagram-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      alert('Diagram exported successfully!');
+    } catch (error) {
+      console.error('Error exporting to JSON:', error);
+      alert('Failed to export diagram to JSON. Please try again.');
+    }
+  }, [nodes, edges]);
+
+  // Import canvas from JSON
+  const importFromJSON = useCallback(() => {
+    try {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = '.json';
+      
+      input.onchange = (e) => {
+        const file = (e.target as HTMLInputElement).files?.[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          try {
+            const content = event.target?.result as string;
+            const flowData = JSON.parse(content);
+            
+            // Validate that the JSON has the required structure
+            if (!flowData.nodes || !flowData.edges) {
+              alert('Invalid JSON file format. Missing nodes or edges.');
+              return;
+            }
+            
+            // Update the canvas with the imported data
+            setNodes(flowData.nodes);
+            setEdges(flowData.edges);
+            
+            // Update node ID counter to prevent conflicts
+            const maxId = flowData.nodes.reduce((max: number, node: Node) => {
+              const nodeId = parseInt(node.id);
+              return isNaN(nodeId) ? max : Math.max(max, nodeId);
+            }, 0);
+            setNodeIdCounter(maxId + 1);
+            
+            alert('Diagram imported successfully!');
+          } catch (error) {
+            console.error('Error parsing JSON:', error);
+            alert('Failed to parse JSON file. Please check the file format.');
+          }
+        };
+        
+        reader.readAsText(file);
+      };
+      
+      input.click();
+    } catch (error) {
+      console.error('Error importing from JSON:', error);
+      alert('Failed to import diagram. Please try again.');
+    }
+  }, [setNodes, setEdges]);
+
   // INI ADALAH FUNGSI KUNCINYA
   const handleGenerateFlow = async () => {
     if (!prompt.trim()) return; // Don't submit empty prompts
@@ -835,6 +915,65 @@ function FlowCanvas() {
             <h3 style={{ margin: '0 0 10px 0', fontSize: '16px', fontWeight: '600', color: '#333' }}>
               Export Options
             </h3>
+            
+            {/* Export to JSON Button */}
+            <button
+              onClick={exportToJSON}
+              style={{
+                backgroundColor: '#17a2b8',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '12px 20px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: '600',
+                boxShadow: '0 2px 8px rgba(23,162,184,0.3)',
+                transition: 'all 0.3s ease',
+                marginBottom: '10px',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#138496';
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(23,162,184,0.4)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#17a2b8';
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 2px 8px rgba(23,162,184,0.3)';
+              }}
+            >
+              💾 Export JSON
+            </button>
+
+            {/* Import from JSON Button */}
+            <button
+              onClick={importFromJSON}
+              style={{
+                backgroundColor: '#ffc107',
+                color: '#333',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '12px 20px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: '600',
+                boxShadow: '0 2px 8px rgba(255,193,7,0.3)',
+                transition: 'all 0.3s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#e0a800';
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(255,193,7,0.4)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#ffc107';
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 2px 8px rgba(255,193,7,0.3)';
+              }}
+            >
+              📂 Import JSON
+            </button>
           </div>
           {/* Top Export Buttons */}
           <div
