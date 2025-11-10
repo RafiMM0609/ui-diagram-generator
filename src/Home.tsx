@@ -791,7 +791,7 @@ function FlowCanvas() {
               position: 'absolute',
               top: '0',
               left: '0',
-              width: '240px',
+              width: '260px',
               height: '100%',
               backgroundColor: '#f8f9fa',
               borderRight: '2px solid #e0e0e0',
@@ -800,14 +800,14 @@ function FlowCanvas() {
               zIndex: 5,
               display: 'flex',
               flexDirection: 'column',
-              gap: '15px',
+              gap: '12px',
               overflowY: 'auto',
             }}
           >
-            <h3 style={{ margin: '0 0 10px 0', fontSize: '16px', fontWeight: '600', color: '#333' }}>
+            <h3 style={{ margin: '0 0 10px 0', fontSize: '18px', fontWeight: '700', color: '#333', letterSpacing: '0.5px' }}>
               Node Types
             </h3>
-            <p style={{ margin: '0 0 15px 0', fontSize: '12px', color: '#666' }}>
+            <p style={{ margin: '0 0 15px 0', fontSize: '12px', color: '#666', lineHeight: '1.4' }}>
               Click to select, then add to canvas
             </p>
             
@@ -815,68 +815,92 @@ function FlowCanvas() {
             <div
               onClick={() => setSelectedNodeType('default')}
               style={{
-                padding: '12px',
+                padding: '14px',
                 backgroundColor: selectedNodeType === 'default' ? '#e3f2fd' : 'white',
                 border: selectedNodeType === 'default' ? '2px solid #2196f3' : '2px solid #ddd',
                 borderRadius: '8px',
                 cursor: 'pointer',
                 transition: 'all 0.2s',
                 boxShadow: selectedNodeType === 'default' ? '0 4px 8px rgba(33, 150, 243, 0.2)' : '0 2px 4px rgba(0,0,0,0.1)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
               }}
             >
-              <div style={{ fontSize: '14px', fontWeight: '500', marginBottom: '5px' }}>📦 Rectangle</div>
-              <div style={{ fontSize: '11px', color: '#666' }}>For processes</div>
+              <div style={{ fontSize: '28px', lineHeight: '1', flexShrink: 0 }}>📦</div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: '14px', fontWeight: '600', marginBottom: '4px' }}>Rectangle</div>
+                <div style={{ fontSize: '11px', color: '#666', lineHeight: '1.3' }}>For processes</div>
+              </div>
             </div>
 
             {/* Diamond Node */}
             <div
               onClick={() => setSelectedNodeType('diamond')}
               style={{
-                padding: '12px',
+                padding: '14px',
                 backgroundColor: selectedNodeType === 'diamond' ? '#e3f2fd' : 'white',
                 border: selectedNodeType === 'diamond' ? '2px solid #4a90e2' : '2px solid #ddd',
                 borderRadius: '8px',
                 cursor: 'pointer',
                 transition: 'all 0.2s',
                 boxShadow: selectedNodeType === 'diamond' ? '0 4px 8px rgba(74, 144, 226, 0.2)' : '0 2px 4px rgba(0,0,0,0.1)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
               }}
             >
-              <div style={{ fontSize: '14px', fontWeight: '500', marginBottom: '5px' }}>🔷 Diamond</div>
-              <div style={{ fontSize: '11px', color: '#666' }}>For decisions</div>
+              <div style={{ fontSize: '28px', lineHeight: '1', flexShrink: 0 }}>🔷</div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: '14px', fontWeight: '600', marginBottom: '4px' }}>Diamond</div>
+                <div style={{ fontSize: '11px', color: '#666', lineHeight: '1.3' }}>For decisions</div>
+              </div>
             </div>
 
             {/* Oval Node */}
             <div
               onClick={() => setSelectedNodeType('oval')}
               style={{
-                padding: '12px',
+                padding: '14px',
                 backgroundColor: selectedNodeType === 'oval' ? '#e8f5e9' : 'white',
                 border: selectedNodeType === 'oval' ? '2px solid #28a745' : '2px solid #ddd',
                 borderRadius: '8px',
                 cursor: 'pointer',
                 transition: 'all 0.2s',
                 boxShadow: selectedNodeType === 'oval' ? '0 4px 8px rgba(40, 167, 69, 0.2)' : '0 2px 4px rgba(0,0,0,0.1)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
               }}
             >
-              <div style={{ fontSize: '14px', fontWeight: '500', marginBottom: '5px' }}>⭕ Oval</div>
-              <div style={{ fontSize: '11px', color: '#666' }}>For start/end</div>
+              <div style={{ fontSize: '28px', lineHeight: '1', flexShrink: 0 }}>⭕</div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: '14px', fontWeight: '600', marginBottom: '4px' }}>Oval</div>
+                <div style={{ fontSize: '11px', color: '#666', lineHeight: '1.3' }}>For start/end</div>
+              </div>
             </div>
 
             {/* Circle Node */}
             <div
               onClick={() => setSelectedNodeType('circle')}
               style={{
-                padding: '12px',
+                padding: '14px',
                 backgroundColor: selectedNodeType === 'circle' ? '#fff3e0' : 'white',
                 border: selectedNodeType === 'circle' ? '2px solid #ffc107' : '2px solid #ddd',
                 borderRadius: '8px',
                 cursor: 'pointer',
                 transition: 'all 0.2s',
                 boxShadow: selectedNodeType === 'circle' ? '0 4px 8px rgba(255, 193, 7, 0.2)' : '0 2px 4px rgba(0,0,0,0.1)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
               }}
             >
-              <div style={{ fontSize: '14px', fontWeight: '500', marginBottom: '5px' }}>⚫ Circle</div>
-              <div style={{ fontSize: '11px', color: '#666' }}>For connectors</div>
+              <div style={{ fontSize: '28px', lineHeight: '1', flexShrink: 0 }}>⚫</div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: '14px', fontWeight: '600', marginBottom: '4px' }}>Circle</div>
+                <div style={{ fontSize: '11px', color: '#666', lineHeight: '1.3' }}>For connectors</div>
+              </div>
             </div>
 
             {/* Divider for ERD Section */}
@@ -886,17 +910,23 @@ function FlowCanvas() {
             <div
               onClick={() => setSelectedNodeType('tableNode')}
               style={{
-                padding: '12px',
+                padding: '14px',
                 backgroundColor: selectedNodeType === 'tableNode' ? '#f3e8ff' : 'white',
                 border: selectedNodeType === 'tableNode' ? '2px solid #6c5ce7' : '2px solid #ddd',
                 borderRadius: '8px',
                 cursor: 'pointer',
                 transition: 'all 0.2s',
                 boxShadow: selectedNodeType === 'tableNode' ? '0 4px 8px rgba(108, 92, 231, 0.2)' : '0 2px 4px rgba(0,0,0,0.1)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
               }}
             >
-              <div style={{ fontSize: '14px', fontWeight: '500', marginBottom: '5px' }}>📊 Database Table</div>
-              <div style={{ fontSize: '11px', color: '#666' }}>For ERD diagrams</div>
+              <div style={{ fontSize: '28px', lineHeight: '1', flexShrink: 0 }}>📊</div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: '14px', fontWeight: '600', marginBottom: '4px' }}>Database Table</div>
+                <div style={{ fontSize: '11px', color: '#666', lineHeight: '1.3' }}>For ERD diagrams</div>
+              </div>
             </div>
 
             {/* Add Node Button */}
@@ -907,13 +937,17 @@ function FlowCanvas() {
                 color: 'white',
                 border: 'none',
                 borderRadius: '8px',
-                padding: '12px 20px',
+                padding: '14px 20px',
                 cursor: 'pointer',
-                fontSize: '14px',
+                fontSize: '15px',
                 fontWeight: '600',
                 boxShadow: '0 2px 8px rgba(40,167,69,0.3)',
                 transition: 'all 0.3s ease',
                 marginTop: '10px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '10px',
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.backgroundColor = '#218838';
@@ -926,12 +960,13 @@ function FlowCanvas() {
                 e.currentTarget.style.boxShadow = '0 2px 8px rgba(40,167,69,0.3)';
               }}
             >
-              ➕ Add to Canvas
+              <span style={{ fontSize: '20px' }}>➕</span>
+              <span>Add to Canvas</span>
             </button>
 
             <div style={{ borderTop: '1px solid #ddd', margin: '10px 0' }}></div>
 
-            <h3 style={{ margin: '0 0 10px 0', fontSize: '16px', fontWeight: '600', color: '#333' }}>
+            <h3 style={{ margin: '0 0 10px 0', fontSize: '18px', fontWeight: '700', color: '#333', letterSpacing: '0.5px' }}>
               Export Options
             </h3>
             
@@ -943,13 +978,17 @@ function FlowCanvas() {
                 color: 'white',
                 border: 'none',
                 borderRadius: '8px',
-                padding: '12px 20px',
+                padding: '14px 20px',
                 cursor: 'pointer',
-                fontSize: '14px',
+                fontSize: '15px',
                 fontWeight: '600',
                 boxShadow: '0 2px 8px rgba(23,162,184,0.3)',
                 transition: 'all 0.3s ease',
                 marginBottom: '10px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '10px',
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.backgroundColor = '#138496';
@@ -962,7 +1001,8 @@ function FlowCanvas() {
                 e.currentTarget.style.boxShadow = '0 2px 8px rgba(23,162,184,0.3)';
               }}
             >
-              💾 Export JSON
+              <span style={{ fontSize: '20px' }}>💾</span>
+              <span>Export JSON</span>
             </button>
 
             {/* Import from JSON Button */}
@@ -973,12 +1013,16 @@ function FlowCanvas() {
                 color: '#333',
                 border: 'none',
                 borderRadius: '8px',
-                padding: '12px 20px',
+                padding: '14px 20px',
                 cursor: 'pointer',
-                fontSize: '14px',
+                fontSize: '15px',
                 fontWeight: '600',
                 boxShadow: '0 2px 8px rgba(255,193,7,0.3)',
                 transition: 'all 0.3s ease',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '10px',
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.backgroundColor = '#e0a800';
@@ -991,7 +1035,8 @@ function FlowCanvas() {
                 e.currentTarget.style.boxShadow = '0 2px 8px rgba(255,193,7,0.3)';
               }}
             >
-              📂 Import JSON
+              <span style={{ fontSize: '20px' }}>📂</span>
+              <span>Import JSON</span>
             </button>
           </div>
           {/* Top Export Buttons */}
@@ -999,7 +1044,7 @@ function FlowCanvas() {
             style={{
               position: 'absolute',
               top: '20px',
-              left: '140px',
+              left: '280px',
               display: 'flex',
               gap: '10px',
               alignItems: 'center',
@@ -1013,12 +1058,15 @@ function FlowCanvas() {
                 color: 'white',
                 border: 'none',
                 borderRadius: '8px',
-                padding: '10px 20px',
+                padding: '12px 24px',
                 cursor: 'pointer',
-                fontSize: '14px',
-                fontWeight: '500',
+                fontSize: '15px',
+                fontWeight: '600',
                 boxShadow: '0 2px 8px rgba(220,53,69,0.3)',
                 transition: 'all 0.3s ease',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.backgroundColor = '#c82333';
@@ -1031,7 +1079,8 @@ function FlowCanvas() {
                 e.currentTarget.style.boxShadow = '0 2px 8px rgba(220,53,69,0.3)';
               }}
             >
-              📄 Export PDF
+              <span style={{ fontSize: '20px' }}>📄</span>
+              <span>Export PDF</span>
             </button>
             <button
               onClick={exportToPDFAlternative}
@@ -1040,12 +1089,15 @@ function FlowCanvas() {
                 color: 'white',
                 border: 'none',
                 borderRadius: '8px',
-                padding: '10px 20px',
+                padding: '12px 24px',
                 cursor: 'pointer',
-                fontSize: '14px',
-                fontWeight: '500',
+                fontSize: '15px',
+                fontWeight: '600',
                 boxShadow: '0 2px 8px rgba(111,66,193,0.3)',
                 transition: 'all 0.3s ease',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.backgroundColor = '#5a2d91';
@@ -1059,7 +1111,8 @@ function FlowCanvas() {
               }}
               title="Alternative export method if main export doesn't show edges"
             >
-              📋 Export Full
+              <span style={{ fontSize: '20px' }}>📋</span>
+              <span>Export Full</span>
             </button>
             {/* <button
               onClick={toggleExcelSelectMode}
@@ -1899,25 +1952,25 @@ function FlowCanvas() {
           backgroundColor: '#007bff',
           color: 'white',
           borderRadius: '50%',
-          width: '60px',
-          height: '60px',
+          width: '70px',
+          height: '70px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           cursor: 'pointer',
-          boxShadow: '0 4px 12px rgba(0,123,255,0.4)',
+          boxShadow: '0 6px 16px rgba(0,123,255,0.4)',
           zIndex: 1001,
-          fontSize: '24px',
+          fontSize: '32px',
           transition: 'all 0.3s ease',
           animation: showBubble ? 'none' : 'pulseButton 2s ease-in-out infinite'
         }}
         onMouseEnter={(e) => {
-          e.currentTarget.style.transform = 'scale(1.1) rotate(15deg)';
-          e.currentTarget.style.boxShadow = '0 6px 16px rgba(0,123,255,0.5)';
+          e.currentTarget.style.transform = 'scale(1.15) rotate(15deg)';
+          e.currentTarget.style.boxShadow = '0 8px 20px rgba(0,123,255,0.5)';
         }}
         onMouseLeave={(e) => {
           e.currentTarget.style.transform = 'scale(1) rotate(0deg)';
-          e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,123,255,0.4)';
+          e.currentTarget.style.boxShadow = '0 6px 16px rgba(0,123,255,0.4)';
         }}
       >
         💬
