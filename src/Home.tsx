@@ -30,6 +30,9 @@ const NODE_POSITION_OFFSET = 100;
 const PDF_EXPORT_PADDING = 150;
 const PDF_FIT_VIEW_DURATION = 200;
 const PDF_FIT_VIEW_WAIT_TIME = 300;
+// Auto-save constants
+const AUTO_SAVE_KEY = 'ui-diagram-autosave';
+const AUTO_SAVE_DELAY = 2000; // 2 seconds after last change
 // import axios from 'axios'; // Untuk memanggil backend
 
 const initialNodes: Node[] = [
@@ -163,6 +166,10 @@ function FlowCanvas() {
   
   // State for sidebar visibility
   const [isSidebarVisible, setIsSidebarVisible] = useState<boolean>(true);
+  
+  // State for auto-save indicator
+  const [autoSaveStatus, setAutoSaveStatus] = useState<'saved' | 'saving' | 'idle'>('idle');
+  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Define custom node types
   const nodeTypes = useMemo(() => ({
@@ -454,6 +461,71 @@ function FlowCanvas() {
     };
   }, [onKeyDown]);
 
+  // Auto-load saved diagram from localStorage on component mount
+  useEffect(() => {
+    try {
+      const savedData = localStorage.getItem(AUTO_SAVE_KEY);
+      if (savedData) {
+        const flowData = JSON.parse(savedData);
+        if (flowData.nodes && flowData.edges) {
+          setNodes(flowData.nodes);
+          setEdges(flowData.edges);
+          
+          // Update node ID counter to prevent conflicts
+          const maxId = flowData.nodes.reduce((max: number, node: Node) => {
+            const nodeId = parseInt(node.id);
+            return isNaN(nodeId) ? max : Math.max(max, nodeId);
+          }, 0);
+          setNodeIdCounter(maxId + 1);
+          
+          setAutoSaveStatus('saved');
+          console.log('Auto-loaded diagram from localStorage');
+        }
+      }
+    } catch (error) {
+      console.error('Error loading auto-saved diagram:', error);
+    }
+  }, [setNodes, setEdges]);
+
+  // Auto-save diagram to localStorage when nodes or edges change
+  useEffect(() => {
+    // Clear any existing timer
+    if (autoSaveTimerRef.current) {
+      clearTimeout(autoSaveTimerRef.current);
+    }
+
+    // Set a new timer to save after delay
+    autoSaveTimerRef.current = setTimeout(() => {
+      try {
+        setAutoSaveStatus('saving');
+        const flowData = {
+          nodes,
+          edges,
+          savedAt: new Date().toISOString(),
+        };
+        localStorage.setItem(AUTO_SAVE_KEY, JSON.stringify(flowData));
+        setAutoSaveStatus('saved');
+        
+        // Reset status to idle after 2 seconds
+        setTimeout(() => {
+          setAutoSaveStatus('idle');
+        }, 2000);
+        
+        console.log('Auto-saved diagram to localStorage');
+      } catch (error) {
+        console.error('Error auto-saving diagram:', error);
+        setAutoSaveStatus('idle');
+      }
+    }, AUTO_SAVE_DELAY);
+
+    // Cleanup timer on unmount
+    return () => {
+      if (autoSaveTimerRef.current) {
+        clearTimeout(autoSaveTimerRef.current);
+      }
+    };
+  }, [nodes, edges]);
+
   // Export canvas to PDF
   const exportToPDF = useCallback(async () => {
     try {
@@ -683,6 +755,21 @@ function FlowCanvas() {
       alert('Failed to import diagram. Please try again.');
     }
   }, [setNodes, setEdges]);
+
+  // Clear auto-saved data from localStorage
+  const clearAutoSave = useCallback(() => {
+    try {
+      const confirmed = window.confirm('Are you sure you want to clear the auto-saved diagram? This action cannot be undone.');
+      if (confirmed) {
+        localStorage.removeItem(AUTO_SAVE_KEY);
+        setAutoSaveStatus('idle');
+        alert('Auto-saved data cleared successfully!');
+      }
+    } catch (error) {
+      console.error('Error clearing auto-save:', error);
+      alert('Failed to clear auto-saved data.');
+    }
+  }, []);
 
   // INI ADALAH FUNGSI KUNCINYA
   const handleGenerateFlow = async () => {
@@ -1113,6 +1200,74 @@ function FlowCanvas() {
               <span style={{ fontSize: '20px' }}>📋</span>
               <span>Export Full</span>
             </button>
+
+            <div style={{ borderTop: '1px solid #DCDCDC', margin: '15px 0' }}></div>
+
+            {/* Clear Auto-save Button */}
+            <button
+              onClick={clearAutoSave}
+              style={{
+                backgroundColor: '#6c757d',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '12px 16px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: '600',
+                boxShadow: '0 2px 8px rgba(108,117,125,0.3)',
+                transition: 'all 0.3s ease',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '10px',
+                marginBottom: '15px',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#545b62';
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(108,117,125,0.4)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#6c757d';
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 2px 8px rgba(108,117,125,0.3)';
+              }}
+              title="Clear auto-saved diagram from browser storage"
+            >
+              <span style={{ fontSize: '18px' }}>🗑️</span>
+              <span>Clear Auto-save</span>
+            </button>
+
+            {/* Auto-save Status Indicator */}
+            <div style={{
+              marginTop: '20px',
+              padding: '12px',
+              backgroundColor: autoSaveStatus === 'saved' ? '#d4edda' : autoSaveStatus === 'saving' ? '#fff3cd' : '#f8f9fa',
+              borderRadius: '8px',
+              border: `2px solid ${autoSaveStatus === 'saved' ? '#28a745' : autoSaveStatus === 'saving' ? '#ffc107' : '#e0e0e0'}`,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              transition: 'all 0.3s ease',
+            }}>
+              <span style={{ fontSize: '20px' }}>
+                {autoSaveStatus === 'saved' ? '✅' : autoSaveStatus === 'saving' ? '⏳' : '💾'}
+              </span>
+              <div style={{ flex: 1 }}>
+                <div style={{ 
+                  fontSize: '13px', 
+                  fontWeight: '600', 
+                  color: autoSaveStatus === 'saved' ? '#155724' : autoSaveStatus === 'saving' ? '#856404' : '#666',
+                  marginBottom: '2px'
+                }}>
+                  {autoSaveStatus === 'saved' ? 'Auto-saved' : autoSaveStatus === 'saving' ? 'Saving...' : 'Auto-save active'}
+                </div>
+                <div style={{ fontSize: '11px', color: '#666', lineHeight: '1.3' }}>
+                  {autoSaveStatus === 'saved' ? 'Changes saved automatically' : autoSaveStatus === 'saving' ? 'Saving your changes' : 'Changes will be saved automatically'}
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Sidebar Toggle Button */}
