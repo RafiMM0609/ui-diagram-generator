@@ -34,10 +34,10 @@ const PDF_FIT_VIEW_WAIT_TIME = 300;
 
 const initialNodes: Node[] = [
   { id: '1', type: 'oval', position: { x: 300, y: 50 }, data: { label: 'Start' } },
-  { id: '2', type: 'default', position: { x: 300, y: 180 }, data: { label: 'Input Data' }, style: { background: 'linear-gradient(135deg, #ffffff 0%, #e3f2fd 100%)', border: '2px solid #2196f3', padding: '12px 20px', borderRadius: '8px', fontWeight: '500', boxShadow: '0 4px 12px rgba(33, 150, 243, 0.2)' } },
-  { id: '3', type: 'default', position: { x: 300, y: 310 }, data: { label: 'Process' }, style: { background: 'linear-gradient(135deg, #ffffff 0%, #e3f2fd 100%)', border: '2px solid #2196f3', padding: '12px 20px', borderRadius: '8px', fontWeight: '500', boxShadow: '0 4px 12px rgba(33, 150, 243, 0.2)' } },
+  { id: '2', type: 'default', position: { x: 300, y: 180 }, data: { label: 'Input Data' }, style: { background: 'linear-gradient(135deg, #ffffff 0%, #F3F2EC 100%)', border: '2px solid #1E93AB', padding: '12px 20px', borderRadius: '8px', fontWeight: '500', boxShadow: '0 4px 12px rgba(30, 147, 171, 0.2)' } },
+  { id: '3', type: 'default', position: { x: 300, y: 310 }, data: { label: 'Process' }, style: { background: 'linear-gradient(135deg, #ffffff 0%, #F3F2EC 100%)', border: '2px solid #1E93AB', padding: '12px 20px', borderRadius: '8px', fontWeight: '500', boxShadow: '0 4px 12px rgba(30, 147, 171, 0.2)' } },
   { id: '4', type: 'diamond', position: { x: 150, y: 460 }, data: { label: 'Decision' } },
-  { id: '5', type: 'default', position: { x: 450, y: 490 }, data: { label: 'Output' }, style: { background: 'linear-gradient(135deg, #ffffff 0%, #e3f2fd 100%)', border: '2px solid #2196f3', padding: '12px 20px', borderRadius: '8px', fontWeight: '500', boxShadow: '0 4px 12px rgba(33, 150, 243, 0.2)' } },
+  { id: '5', type: 'default', position: { x: 450, y: 490 }, data: { label: 'Output' }, style: { background: 'linear-gradient(135deg, #ffffff 0%, #F3F2EC 100%)', border: '2px solid #1E93AB', padding: '12px 20px', borderRadius: '8px', fontWeight: '500', boxShadow: '0 4px 12px rgba(30, 147, 171, 0.2)' } },
   { id: '6', type: 'oval', position: { x: 300, y: 630 }, data: { label: 'End' } },
   // ERD Example Nodes
   { 
@@ -160,6 +160,9 @@ function FlowCanvas() {
     isPK: boolean;
     isFK: boolean;
   }>>([]);
+  
+  // State for sidebar visibility
+  const [isSidebarVisible, setIsSidebarVisible] = useState<boolean>(true);
 
   // Define custom node types
   const nodeTypes = useMemo(() => ({
@@ -790,24 +793,25 @@ function FlowCanvas() {
             style={{
               position: 'absolute',
               top: '0',
-              left: '0',
-              width: '240px',
+              left: isSidebarVisible ? '0' : '-260px',
+              width: '260px',
               height: '100%',
-              backgroundColor: '#f8f9fa',
-              borderRight: '2px solid #e0e0e0',
+              backgroundColor: '#F3F2EC',
+              borderRight: '2px solid #DCDCDC',
               padding: '20px',
               boxShadow: '2px 0 8px rgba(0,0,0,0.1)',
               zIndex: 5,
               display: 'flex',
               flexDirection: 'column',
-              gap: '15px',
+              gap: '12px',
               overflowY: 'auto',
+              transition: 'left 0.3s ease-in-out',
             }}
           >
-            <h3 style={{ margin: '0 0 10px 0', fontSize: '16px', fontWeight: '600', color: '#333' }}>
+            <h3 style={{ margin: '0 0 10px 0', fontSize: '18px', fontWeight: '700', color: '#333', letterSpacing: '0.5px' }}>
               Node Types
             </h3>
-            <p style={{ margin: '0 0 15px 0', fontSize: '12px', color: '#666' }}>
+            <p style={{ margin: '0 0 15px 0', fontSize: '12px', color: '#666', lineHeight: '1.4' }}>
               Click to select, then add to canvas
             </p>
             
@@ -815,123 +819,158 @@ function FlowCanvas() {
             <div
               onClick={() => setSelectedNodeType('default')}
               style={{
-                padding: '12px',
-                backgroundColor: selectedNodeType === 'default' ? '#e3f2fd' : 'white',
-                border: selectedNodeType === 'default' ? '2px solid #2196f3' : '2px solid #ddd',
+                padding: '14px',
+                backgroundColor: selectedNodeType === 'default' ? '#1E93AB' : 'white',
+                border: selectedNodeType === 'default' ? '2px solid #1E93AB' : '2px solid #DCDCDC',
                 borderRadius: '8px',
                 cursor: 'pointer',
                 transition: 'all 0.2s',
-                boxShadow: selectedNodeType === 'default' ? '0 4px 8px rgba(33, 150, 243, 0.2)' : '0 2px 4px rgba(0,0,0,0.1)',
+                boxShadow: selectedNodeType === 'default' ? '0 4px 8px rgba(30, 147, 171, 0.3)' : '0 2px 4px rgba(0,0,0,0.1)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
               }}
             >
-              <div style={{ fontSize: '14px', fontWeight: '500', marginBottom: '5px' }}>📦 Rectangle</div>
-              <div style={{ fontSize: '11px', color: '#666' }}>For processes</div>
+              <div style={{ fontSize: '28px', lineHeight: '1', flexShrink: 0 }}>📦</div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: '14px', fontWeight: '600', marginBottom: '4px', color: selectedNodeType === 'default' ? 'white' : '#333' }}>Rectangle</div>
+                <div style={{ fontSize: '11px', color: selectedNodeType === 'default' ? 'rgba(255,255,255,0.9)' : '#666', lineHeight: '1.3' }}>For processes</div>
+              </div>
             </div>
 
             {/* Diamond Node */}
             <div
               onClick={() => setSelectedNodeType('diamond')}
               style={{
-                padding: '12px',
-                backgroundColor: selectedNodeType === 'diamond' ? '#e3f2fd' : 'white',
-                border: selectedNodeType === 'diamond' ? '2px solid #4a90e2' : '2px solid #ddd',
+                padding: '14px',
+                backgroundColor: selectedNodeType === 'diamond' ? '#1E93AB' : 'white',
+                border: selectedNodeType === 'diamond' ? '2px solid #1E93AB' : '2px solid #DCDCDC',
                 borderRadius: '8px',
                 cursor: 'pointer',
                 transition: 'all 0.2s',
-                boxShadow: selectedNodeType === 'diamond' ? '0 4px 8px rgba(74, 144, 226, 0.2)' : '0 2px 4px rgba(0,0,0,0.1)',
+                boxShadow: selectedNodeType === 'diamond' ? '0 4px 8px rgba(30, 147, 171, 0.3)' : '0 2px 4px rgba(0,0,0,0.1)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
               }}
             >
-              <div style={{ fontSize: '14px', fontWeight: '500', marginBottom: '5px' }}>🔷 Diamond</div>
-              <div style={{ fontSize: '11px', color: '#666' }}>For decisions</div>
+              <div style={{ fontSize: '28px', lineHeight: '1', flexShrink: 0 }}>🔷</div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: '14px', fontWeight: '600', marginBottom: '4px', color: selectedNodeType === 'diamond' ? 'white' : '#333' }}>Diamond</div>
+                <div style={{ fontSize: '11px', color: selectedNodeType === 'diamond' ? 'rgba(255,255,255,0.9)' : '#666', lineHeight: '1.3' }}>For decisions</div>
+              </div>
             </div>
 
             {/* Oval Node */}
             <div
               onClick={() => setSelectedNodeType('oval')}
               style={{
-                padding: '12px',
-                backgroundColor: selectedNodeType === 'oval' ? '#e8f5e9' : 'white',
-                border: selectedNodeType === 'oval' ? '2px solid #28a745' : '2px solid #ddd',
+                padding: '14px',
+                backgroundColor: selectedNodeType === 'oval' ? '#1E93AB' : 'white',
+                border: selectedNodeType === 'oval' ? '2px solid #1E93AB' : '2px solid #DCDCDC',
                 borderRadius: '8px',
                 cursor: 'pointer',
                 transition: 'all 0.2s',
-                boxShadow: selectedNodeType === 'oval' ? '0 4px 8px rgba(40, 167, 69, 0.2)' : '0 2px 4px rgba(0,0,0,0.1)',
+                boxShadow: selectedNodeType === 'oval' ? '0 4px 8px rgba(30, 147, 171, 0.3)' : '0 2px 4px rgba(0,0,0,0.1)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
               }}
             >
-              <div style={{ fontSize: '14px', fontWeight: '500', marginBottom: '5px' }}>⭕ Oval</div>
-              <div style={{ fontSize: '11px', color: '#666' }}>For start/end</div>
+              <div style={{ fontSize: '28px', lineHeight: '1', flexShrink: 0 }}>⭕</div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: '14px', fontWeight: '600', marginBottom: '4px', color: selectedNodeType === 'oval' ? 'white' : '#333' }}>Oval</div>
+                <div style={{ fontSize: '11px', color: selectedNodeType === 'oval' ? 'rgba(255,255,255,0.9)' : '#666', lineHeight: '1.3' }}>For start/end</div>
+              </div>
             </div>
 
             {/* Circle Node */}
             <div
               onClick={() => setSelectedNodeType('circle')}
               style={{
-                padding: '12px',
-                backgroundColor: selectedNodeType === 'circle' ? '#fff3e0' : 'white',
-                border: selectedNodeType === 'circle' ? '2px solid #ffc107' : '2px solid #ddd',
+                padding: '14px',
+                backgroundColor: selectedNodeType === 'circle' ? '#1E93AB' : 'white',
+                border: selectedNodeType === 'circle' ? '2px solid #1E93AB' : '2px solid #DCDCDC',
                 borderRadius: '8px',
                 cursor: 'pointer',
                 transition: 'all 0.2s',
-                boxShadow: selectedNodeType === 'circle' ? '0 4px 8px rgba(255, 193, 7, 0.2)' : '0 2px 4px rgba(0,0,0,0.1)',
+                boxShadow: selectedNodeType === 'circle' ? '0 4px 8px rgba(30, 147, 171, 0.3)' : '0 2px 4px rgba(0,0,0,0.1)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
               }}
             >
-              <div style={{ fontSize: '14px', fontWeight: '500', marginBottom: '5px' }}>⚫ Circle</div>
-              <div style={{ fontSize: '11px', color: '#666' }}>For connectors</div>
+              <div style={{ fontSize: '28px', lineHeight: '1', flexShrink: 0 }}>⚫</div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: '14px', fontWeight: '600', marginBottom: '4px', color: selectedNodeType === 'circle' ? 'white' : '#333' }}>Circle</div>
+                <div style={{ fontSize: '11px', color: selectedNodeType === 'circle' ? 'rgba(255,255,255,0.9)' : '#666', lineHeight: '1.3' }}>For connectors</div>
+              </div>
             </div>
 
             {/* Divider for ERD Section */}
-            <div style={{ borderTop: '2px solid #ddd', margin: '15px 0' }}></div>
+            <div style={{ borderTop: '2px solid #DCDCDC', margin: '15px 0' }}></div>
 
             {/* Table Node (ERD) */}
             <div
               onClick={() => setSelectedNodeType('tableNode')}
               style={{
-                padding: '12px',
-                backgroundColor: selectedNodeType === 'tableNode' ? '#f3e8ff' : 'white',
-                border: selectedNodeType === 'tableNode' ? '2px solid #6c5ce7' : '2px solid #ddd',
+                padding: '14px',
+                backgroundColor: selectedNodeType === 'tableNode' ? '#1E93AB' : 'white',
+                border: selectedNodeType === 'tableNode' ? '2px solid #1E93AB' : '2px solid #DCDCDC',
                 borderRadius: '8px',
                 cursor: 'pointer',
                 transition: 'all 0.2s',
-                boxShadow: selectedNodeType === 'tableNode' ? '0 4px 8px rgba(108, 92, 231, 0.2)' : '0 2px 4px rgba(0,0,0,0.1)',
+                boxShadow: selectedNodeType === 'tableNode' ? '0 4px 8px rgba(30, 147, 171, 0.3)' : '0 2px 4px rgba(0,0,0,0.1)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
               }}
             >
-              <div style={{ fontSize: '14px', fontWeight: '500', marginBottom: '5px' }}>📊 Database Table</div>
-              <div style={{ fontSize: '11px', color: '#666' }}>For ERD diagrams</div>
+              <div style={{ fontSize: '28px', lineHeight: '1', flexShrink: 0 }}>📊</div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: '14px', fontWeight: '600', marginBottom: '4px', color: selectedNodeType === 'tableNode' ? 'white' : '#333' }}>Database Table</div>
+                <div style={{ fontSize: '11px', color: selectedNodeType === 'tableNode' ? 'rgba(255,255,255,0.9)' : '#666', lineHeight: '1.3' }}>For ERD diagrams</div>
+              </div>
             </div>
 
             {/* Add Node Button */}
             <button
               onClick={addNode}
               style={{
-                backgroundColor: '#28a745',
+                backgroundColor: '#1E93AB',
                 color: 'white',
                 border: 'none',
                 borderRadius: '8px',
-                padding: '12px 20px',
+                padding: '14px 20px',
                 cursor: 'pointer',
-                fontSize: '14px',
+                fontSize: '15px',
                 fontWeight: '600',
-                boxShadow: '0 2px 8px rgba(40,167,69,0.3)',
+                boxShadow: '0 2px 8px rgba(30,147,171,0.3)',
                 transition: 'all 0.3s ease',
                 marginTop: '10px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '10px',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#218838';
+                e.currentTarget.style.backgroundColor = '#167589';
                 e.currentTarget.style.transform = 'translateY(-2px)';
-                e.currentTarget.style.boxShadow = '0 4px 12px rgba(40,167,69,0.4)';
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(30,147,171,0.4)';
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = '#28a745';
+                e.currentTarget.style.backgroundColor = '#1E93AB';
                 e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 2px 8px rgba(40,167,69,0.3)';
+                e.currentTarget.style.boxShadow = '0 2px 8px rgba(30,147,171,0.3)';
               }}
             >
-              ➕ Add to Canvas
+              <span style={{ fontSize: '20px' }}>➕</span>
+              <span>Add to Canvas</span>
             </button>
 
-            <div style={{ borderTop: '1px solid #ddd', margin: '10px 0' }}></div>
+            <div style={{ borderTop: '1px solid #DCDCDC', margin: '10px 0' }}></div>
 
-            <h3 style={{ margin: '0 0 10px 0', fontSize: '16px', fontWeight: '600', color: '#333' }}>
+            <h3 style={{ margin: '0 0 10px 0', fontSize: '18px', fontWeight: '700', color: '#333', letterSpacing: '0.5px' }}>
               Export Options
             </h3>
             
@@ -939,204 +978,179 @@ function FlowCanvas() {
             <button
               onClick={exportToJSON}
               style={{
-                backgroundColor: '#17a2b8',
+                backgroundColor: '#1E93AB',
                 color: 'white',
                 border: 'none',
                 borderRadius: '8px',
-                padding: '12px 20px',
+                padding: '14px 20px',
                 cursor: 'pointer',
-                fontSize: '14px',
+                fontSize: '15px',
                 fontWeight: '600',
-                boxShadow: '0 2px 8px rgba(23,162,184,0.3)',
+                boxShadow: '0 2px 8px rgba(30,147,171,0.3)',
                 transition: 'all 0.3s ease',
                 marginBottom: '10px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '10px',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#138496';
+                e.currentTarget.style.backgroundColor = '#167589';
                 e.currentTarget.style.transform = 'translateY(-2px)';
-                e.currentTarget.style.boxShadow = '0 4px 12px rgba(23,162,184,0.4)';
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(30,147,171,0.4)';
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = '#17a2b8';
+                e.currentTarget.style.backgroundColor = '#1E93AB';
                 e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 2px 8px rgba(23,162,184,0.3)';
+                e.currentTarget.style.boxShadow = '0 2px 8px rgba(30,147,171,0.3)';
               }}
             >
-              💾 Export JSON
+              <span style={{ fontSize: '20px' }}>💾</span>
+              <span>Export JSON</span>
             </button>
 
             {/* Import from JSON Button */}
             <button
               onClick={importFromJSON}
               style={{
-                backgroundColor: '#ffc107',
-                color: '#333',
+                backgroundColor: '#1E93AB',
+                color: 'white',
                 border: 'none',
                 borderRadius: '8px',
-                padding: '12px 20px',
+                padding: '14px 20px',
                 cursor: 'pointer',
-                fontSize: '14px',
+                fontSize: '15px',
                 fontWeight: '600',
-                boxShadow: '0 2px 8px rgba(255,193,7,0.3)',
+                boxShadow: '0 2px 8px rgba(30,147,171,0.3)',
                 transition: 'all 0.3s ease',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '10px',
+                marginBottom: '10px',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#e0a800';
+                e.currentTarget.style.backgroundColor = '#167589';
                 e.currentTarget.style.transform = 'translateY(-2px)';
-                e.currentTarget.style.boxShadow = '0 4px 12px rgba(255,193,7,0.4)';
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(30,147,171,0.4)';
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = '#ffc107';
+                e.currentTarget.style.backgroundColor = '#1E93AB';
                 e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 2px 8px rgba(255,193,7,0.3)';
+                e.currentTarget.style.boxShadow = '0 2px 8px rgba(30,147,171,0.3)';
               }}
             >
-              📂 Import JSON
+              <span style={{ fontSize: '20px' }}>📂</span>
+              <span>Import JSON</span>
             </button>
-          </div>
-          {/* Top Export Buttons */}
-          <div
-            style={{
-              position: 'absolute',
-              top: '20px',
-              left: '140px',
-              display: 'flex',
-              gap: '10px',
-              alignItems: 'center',
-              zIndex: 5,
-            }}
-          >
+
+            {/* Export to PDF Button */}
             <button
               onClick={exportToPDF}
               style={{
-                backgroundColor: '#dc3545',
+                backgroundColor: '#E62727',
                 color: 'white',
                 border: 'none',
                 borderRadius: '8px',
-                padding: '10px 20px',
+                padding: '14px 20px',
                 cursor: 'pointer',
-                fontSize: '14px',
-                fontWeight: '500',
-                boxShadow: '0 2px 8px rgba(220,53,69,0.3)',
+                fontSize: '15px',
+                fontWeight: '600',
+                boxShadow: '0 2px 8px rgba(230,39,39,0.3)',
                 transition: 'all 0.3s ease',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '10px',
+                marginBottom: '10px',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#c82333';
-                e.currentTarget.style.transform = 'translateY(-1px)';
-                e.currentTarget.style.boxShadow = '0 4px 12px rgba(220,53,69,0.4)';
+                e.currentTarget.style.backgroundColor = '#c21f1f';
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(230,39,39,0.4)';
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = '#dc3545';
+                e.currentTarget.style.backgroundColor = '#E62727';
                 e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 2px 8px rgba(220,53,69,0.3)';
+                e.currentTarget.style.boxShadow = '0 2px 8px rgba(230,39,39,0.3)';
               }}
             >
-              📄 Export PDF
+              <span style={{ fontSize: '20px' }}>📄</span>
+              <span>Export PDF</span>
             </button>
+
+            {/* Export Full PDF Button */}
             <button
               onClick={exportToPDFAlternative}
               style={{
-                backgroundColor: '#6f42c1',
+                backgroundColor: '#E62727',
                 color: 'white',
                 border: 'none',
                 borderRadius: '8px',
-                padding: '10px 20px',
+                padding: '14px 20px',
                 cursor: 'pointer',
-                fontSize: '14px',
-                fontWeight: '500',
-                boxShadow: '0 2px 8px rgba(111,66,193,0.3)',
+                fontSize: '15px',
+                fontWeight: '600',
+                boxShadow: '0 2px 8px rgba(230,39,39,0.3)',
                 transition: 'all 0.3s ease',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '10px',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#5a2d91';
-                e.currentTarget.style.transform = 'translateY(-1px)';
-                e.currentTarget.style.boxShadow = '0 4px 12px rgba(111,66,193,0.4)';
+                e.currentTarget.style.backgroundColor = '#c21f1f';
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(230,39,39,0.4)';
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = '#6f42c1';
+                e.currentTarget.style.backgroundColor = '#E62727';
                 e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 2px 8px rgba(111,66,193,0.3)';
+                e.currentTarget.style.boxShadow = '0 2px 8px rgba(230,39,39,0.3)';
               }}
               title="Alternative export method if main export doesn't show edges"
             >
-              📋 Export Full
+              <span style={{ fontSize: '20px' }}>📋</span>
+              <span>Export Full</span>
             </button>
-            {/* <button
-              onClick={toggleExcelSelectMode}
-              style={{
-                backgroundColor: isExcelSelectMode ? '#ff6b6b' : '#17a2b8',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                padding: '10px 20px',
-                cursor: 'pointer',
-                fontSize: '14px',
-                fontWeight: '500',
-                boxShadow: isExcelSelectMode ? '0 2px 8px rgba(255,107,107,0.3)' : '0 2px 8px rgba(23,162,184,0.3)',
-                transition: 'all 0.3s ease',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = isExcelSelectMode ? '#ff5252' : '#138496';
-                e.currentTarget.style.transform = 'translateY(-1px)';
-                e.currentTarget.style.boxShadow = isExcelSelectMode ? '0 4px 12px rgba(255,107,107,0.4)' : '0 4px 12px rgba(23,162,184,0.4)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = isExcelSelectMode ? '#ff6b6b' : '#17a2b8';
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = isExcelSelectMode ? '0 2px 8px rgba(255,107,107,0.3)' : '0 2px 8px rgba(23,162,184,0.3)';
-              }}
-              title={isExcelSelectMode ? 'Exit selection mode' : 'Select nodes to export to Excel'}
-            >
-              {isExcelSelectMode ? '✖ Cancel' : '📊 Select for Excel'}
-            </button> */}
-            {/* {(isExcelSelectMode || selectedNodesForExcel.size > 0) && (
-              <button
-                onClick={exportToExcel}
-                style={{
-                  backgroundColor: '#20c997',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  padding: '10px 20px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  boxShadow: '0 2px 8px rgba(32,201,151,0.3)',
-                  transition: 'all 0.3s ease',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#1aa179';
-                  e.currentTarget.style.transform = 'translateY(-1px)';
-                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(32,201,151,0.4)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = '#20c997';
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = '0 2px 8px rgba(32,201,151,0.3)';
-                }}
-                title={`Export ${selectedNodesForExcel.size > 0 ? selectedNodesForExcel.size + ' selected' : 'all'} nodes to Excel`}
-              >
-                📑 Export {selectedNodesForExcel.size > 0 ? `(${selectedNodesForExcel.size})` : 'All'} to Excel
-              </button>
-            )} */}
           </div>
-          {/* Instructions */}
-          {/* <div
+
+          {/* Sidebar Toggle Button */}
+          <button
+            onClick={() => setIsSidebarVisible(!isSidebarVisible)}
             style={{
               position: 'absolute',
               top: '20px',
-              right: '100px',
-              backgroundColor: 'white',
+              left: isSidebarVisible ? '270px' : '10px',
+              backgroundColor: '#1E93AB',
+              color: 'white',
+              border: 'none',
               borderRadius: '8px',
-              padding: '10px 15px',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-              fontSize: '12px',
-              color: '#666',
-              zIndex: 5,
+              padding: '12px 16px',
+              cursor: 'pointer',
+              fontSize: '20px',
+              fontWeight: '600',
+              boxShadow: '0 2px 8px rgba(30,147,171,0.3)',
+              transition: 'all 0.3s ease',
+              zIndex: 6,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#167589';
+              e.currentTarget.style.transform = 'scale(1.05)';
+              e.currentTarget.style.boxShadow = '0 4px 12px rgba(30,147,171,0.4)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = '#1E93AB';
+              e.currentTarget.style.transform = 'scale(1)';
+              e.currentTarget.style.boxShadow = '0 2px 8px rgba(30,147,171,0.3)';
+            }}
+            title={isSidebarVisible ? 'Hide Sidebar' : 'Show Sidebar'}
           >
-            💡 Double-click a node/edge to edit • Drag to connect nodes • Select and press Delete to remove nodes{isExcelSelectMode ? ' • Click nodes to select/deselect for Excel export' : ' • Use "Select for Excel" to choose specific nodes to export'}
-          </div> */}
+            {isSidebarVisible ? '◀' : '▶'}
+          </button>
         </div>
       ) : (
         <div style={{
@@ -1243,7 +1257,7 @@ function FlowCanvas() {
               <button
                 onClick={() => editingNodeId && deleteNode(editingNodeId)}
                 style={{
-                  backgroundColor: '#dc3545',
+                  backgroundColor: '#E62727',
                   color: 'white',
                   border: 'none',
                   borderRadius: '6px',
@@ -1252,10 +1266,10 @@ function FlowCanvas() {
                   fontSize: '14px',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#c82333';
+                  e.currentTarget.style.backgroundColor = '#c21f1f';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = '#dc3545';
+                  e.currentTarget.style.backgroundColor = '#E62727';
                 }}
               >
                 Delete
@@ -1264,8 +1278,8 @@ function FlowCanvas() {
                 <button
                   onClick={cancelEdit}
                   style={{
-                    backgroundColor: '#6c757d',
-                    color: 'white',
+                    backgroundColor: '#DCDCDC',
+                    color: '#333',
                     border: 'none',
                     borderRadius: '6px',
                     padding: '8px 16px',
@@ -1278,7 +1292,7 @@ function FlowCanvas() {
                 <button
                   onClick={saveNodeLabel}
                   style={{
-                    backgroundColor: '#007bff',
+                    backgroundColor: '#1E93AB',
                     color: 'white',
                     border: 'none',
                     borderRadius: '6px',
@@ -1337,7 +1351,7 @@ function FlowCanvas() {
                 width: '100%',
                 padding: '12px',
                 fontSize: '14px',
-                border: '2px solid #e0e0e0',
+                border: '2px solid #DCDCDC',
                 borderRadius: '8px',
                 marginBottom: '15px',
                 boxSizing: 'border-box',
@@ -1346,17 +1360,17 @@ function FlowCanvas() {
               }}
               placeholder="e.g., Yes, No, Next..."
               onFocus={(e) => {
-                e.currentTarget.style.borderColor = '#007bff';
+                e.currentTarget.style.borderColor = '#1E93AB';
               }}
               onBlur={(e) => {
-                e.currentTarget.style.borderColor = '#e0e0e0';
+                e.currentTarget.style.borderColor = '#DCDCDC';
               }}
             />
             <div style={{ display: 'flex', gap: '10px', justifyContent: 'space-between' }}>
               <button
                 onClick={() => editingEdgeId && deleteEdge(editingEdgeId)}
                 style={{
-                  backgroundColor: '#dc3545',
+                  backgroundColor: '#E62727',
                   color: 'white',
                   border: 'none',
                   borderRadius: '8px',
@@ -1367,10 +1381,10 @@ function FlowCanvas() {
                   transition: 'all 0.2s',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#c82333';
+                  e.currentTarget.style.backgroundColor = '#c21f1f';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = '#dc3545';
+                  e.currentTarget.style.backgroundColor = '#E62727';
                 }}
               >
                 Delete
@@ -1379,9 +1393,9 @@ function FlowCanvas() {
                 <button
                   onClick={cancelEdgeEdit}
                   style={{
-                    backgroundColor: '#f5f5f5',
+                    backgroundColor: '#DCDCDC',
                     color: '#333',
-                    border: '1px solid #ddd',
+                    border: 'none',
                     borderRadius: '8px',
                     padding: '10px 20px',
                     cursor: 'pointer',
@@ -1390,10 +1404,10 @@ function FlowCanvas() {
                     transition: 'all 0.2s',
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = '#e8e8e8';
+                    e.currentTarget.style.backgroundColor = '#c8c8c8';
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = '#f5f5f5';
+                    e.currentTarget.style.backgroundColor = '#DCDCDC';
                   }}
                 >
                   Cancel
@@ -1401,7 +1415,7 @@ function FlowCanvas() {
                 <button
                   onClick={saveEdgeLabel}
                   style={{
-                    backgroundColor: '#007bff',
+                    backgroundColor: '#1E93AB',
                     color: 'white',
                     border: 'none',
                     borderRadius: '8px',
@@ -1412,10 +1426,10 @@ function FlowCanvas() {
                     transition: 'all 0.2s',
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = '#0056b3';
+                    e.currentTarget.style.backgroundColor = '#167589';
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = '#007bff';
+                    e.currentTarget.style.backgroundColor = '#1E93AB';
                   }}
                 >
                   Save Label
@@ -1473,17 +1487,17 @@ function FlowCanvas() {
                   width: '100%',
                   padding: '10px 12px',
                   fontSize: '14px',
-                  border: '2px solid #e0e0e0',
+                  border: '2px solid #DCDCDC',
                   borderRadius: '6px',
                   boxSizing: 'border-box',
                   outline: 'none',
                   transition: 'border-color 0.2s',
                 }}
                 onFocus={(e) => {
-                  e.currentTarget.style.borderColor = '#6c5ce7';
+                  e.currentTarget.style.borderColor = '#1E93AB';
                 }}
                 onBlur={(e) => {
-                  e.currentTarget.style.borderColor = '#e0e0e0';
+                  e.currentTarget.style.borderColor = '#DCDCDC';
                 }}
               />
             </div>
@@ -1497,7 +1511,7 @@ function FlowCanvas() {
                 <button
                   onClick={addColumnToTable}
                   style={{
-                    backgroundColor: '#28a745',
+                    backgroundColor: '#1E93AB',
                     color: 'white',
                     border: 'none',
                     borderRadius: '6px',
@@ -1508,10 +1522,10 @@ function FlowCanvas() {
                     transition: 'background-color 0.2s',
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = '#218838';
+                    e.currentTarget.style.backgroundColor = '#167589';
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = '#28a745';
+                    e.currentTarget.style.backgroundColor = '#1E93AB';
                   }}
                 >
                   ➕ Add Column
@@ -1652,7 +1666,7 @@ function FlowCanvas() {
               <button
                 onClick={() => editingTableNodeId && deleteTableNode(editingTableNodeId)}
                 style={{
-                  backgroundColor: '#dc3545',
+                  backgroundColor: '#E62727',
                   color: 'white',
                   border: 'none',
                   borderRadius: '8px',
@@ -1663,10 +1677,10 @@ function FlowCanvas() {
                   transition: 'background-color 0.2s',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#c82333';
+                  e.currentTarget.style.backgroundColor = '#c21f1f';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = '#dc3545';
+                  e.currentTarget.style.backgroundColor = '#E62727';
                 }}
               >
                 🗑️ Delete Table
@@ -1675,8 +1689,8 @@ function FlowCanvas() {
                 <button
                   onClick={cancelTableEdit}
                   style={{
-                    backgroundColor: '#6c757d',
-                    color: 'white',
+                    backgroundColor: '#DCDCDC',
+                    color: '#333',
                     border: 'none',
                     borderRadius: '8px',
                     padding: '10px 20px',
@@ -1686,10 +1700,10 @@ function FlowCanvas() {
                     transition: 'background-color 0.2s',
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = '#5a6268';
+                    e.currentTarget.style.backgroundColor = '#c8c8c8';
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = '#6c757d';
+                    e.currentTarget.style.backgroundColor = '#DCDCDC';
                   }}
                 >
                   Cancel
@@ -1697,7 +1711,7 @@ function FlowCanvas() {
                 <button
                   onClick={saveTableNode}
                   style={{
-                    backgroundColor: '#6c5ce7',
+                    backgroundColor: '#1E93AB',
                     color: 'white',
                     border: 'none',
                     borderRadius: '8px',
@@ -1708,10 +1722,10 @@ function FlowCanvas() {
                     transition: 'background-color 0.2s',
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = '#5f4dd1';
+                    e.currentTarget.style.backgroundColor = '#167589';
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = '#6c5ce7';
+                    e.currentTarget.style.backgroundColor = '#1E93AB';
                   }}
                 >
                   💾 Save Table
@@ -1896,28 +1910,28 @@ function FlowCanvas() {
           position: 'fixed',
           bottom: '20px',
           right: '20px',
-          backgroundColor: '#007bff',
+          backgroundColor: '#1E93AB',
           color: 'white',
           borderRadius: '50%',
-          width: '60px',
-          height: '60px',
+          width: '70px',
+          height: '70px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           cursor: 'pointer',
-          boxShadow: '0 4px 12px rgba(0,123,255,0.4)',
+          boxShadow: '0 6px 16px rgba(30,147,171,0.4)',
           zIndex: 1001,
-          fontSize: '24px',
+          fontSize: '32px',
           transition: 'all 0.3s ease',
           animation: showBubble ? 'none' : 'pulseButton 2s ease-in-out infinite'
         }}
         onMouseEnter={(e) => {
-          e.currentTarget.style.transform = 'scale(1.1) rotate(15deg)';
-          e.currentTarget.style.boxShadow = '0 6px 16px rgba(0,123,255,0.5)';
+          e.currentTarget.style.transform = 'scale(1.15) rotate(15deg)';
+          e.currentTarget.style.boxShadow = '0 8px 20px rgba(30,147,171,0.5)';
         }}
         onMouseLeave={(e) => {
           e.currentTarget.style.transform = 'scale(1) rotate(0deg)';
-          e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,123,255,0.4)';
+          e.currentTarget.style.boxShadow = '0 6px 16px rgba(30,147,171,0.4)';
         }}
       >
         💬
