@@ -33,7 +33,7 @@ const PDF_FIT_VIEW_WAIT_TIME = 300;
 // Auto-save constants
 const AUTO_SAVE_KEY = 'ui-diagram-autosave';
 const AUTO_SAVE_DELAY = 2000; // 2 seconds after last change
-// import axios from 'axios'; // Untuk memanggil backend
+const BACKEND_API_URL = 'http://127.0.0.1:3000'; // Backend URL for database operations
 
 const initialNodes: Node[] = [
   { id: '1', type: 'oval', position: { x: 300, y: 50 }, data: { label: 'Start' } },
@@ -170,6 +170,11 @@ function FlowCanvas() {
   // State for auto-save indicator
   const [autoSaveStatus, setAutoSaveStatus] = useState<'saved' | 'saving' | 'idle'>('idle');
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  
+  // State for database auto-save
+  const [dbAutoSaveEnabled, setDbAutoSaveEnabled] = useState<boolean>(true);
+  const [dbAutoSaveStatus, setDbAutoSaveStatus] = useState<'saved' | 'saving' | 'error' | 'idle'>('idle');
+  const [diagramId, setDiagramId] = useState<string | null>(null);
 
   // Define custom node types
   const nodeTypes = useMemo(() => ({
@@ -461,6 +466,55 @@ function FlowCanvas() {
     };
   }, [onKeyDown]);
 
+  // Function to save diagram to database
+  const saveDiagramToDatabase = useCallback(async (flowData: { nodes: Node[], edges: Edge[], savedAt: string }) => {
+    if (!dbAutoSaveEnabled) return;
+    
+    try {
+      setDbAutoSaveStatus('saving');
+      
+      const response = await fetch(`${BACKEND_API_URL}/api/diagrams/save`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id: diagramId,
+          ...flowData,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save to database');
+      }
+
+      const result = await response.json();
+      
+      // If this is a new diagram, store the ID for future updates
+      if (result.id && !diagramId) {
+        setDiagramId(result.id);
+        localStorage.setItem('current-diagram-id', result.id);
+      }
+      
+      setDbAutoSaveStatus('saved');
+      console.log('Diagram saved to database successfully');
+      
+      // Reset status to idle after 2 seconds
+      setTimeout(() => {
+        setDbAutoSaveStatus('idle');
+      }, 2000);
+      
+    } catch (error) {
+      console.error('Error saving diagram to database:', error);
+      setDbAutoSaveStatus('error');
+      
+      // Reset error status after 3 seconds
+      setTimeout(() => {
+        setDbAutoSaveStatus('idle');
+      }, 3000);
+    }
+  }, [dbAutoSaveEnabled, diagramId]);
+
   // Auto-load saved diagram from localStorage on component mount
   useEffect(() => {
     try {
@@ -482,12 +536,18 @@ function FlowCanvas() {
           console.log('Auto-loaded diagram from localStorage');
         }
       }
+      
+      // Load diagram ID if it exists
+      const savedDiagramId = localStorage.getItem('current-diagram-id');
+      if (savedDiagramId) {
+        setDiagramId(savedDiagramId);
+      }
     } catch (error) {
       console.error('Error loading auto-saved diagram:', error);
     }
   }, [setNodes, setEdges]);
 
-  // Auto-save diagram to localStorage when nodes or edges change
+  // Auto-save diagram to localStorage and database when nodes or edges change
   useEffect(() => {
     // Clear any existing timer
     if (autoSaveTimerRef.current) {
@@ -495,7 +555,7 @@ function FlowCanvas() {
     }
 
     // Set a new timer to save after delay
-    autoSaveTimerRef.current = setTimeout(() => {
+    autoSaveTimerRef.current = setTimeout(async () => {
       try {
         setAutoSaveStatus('saving');
         const flowData = {
@@ -503,6 +563,8 @@ function FlowCanvas() {
           edges,
           savedAt: new Date().toISOString(),
         };
+        
+        // Save to localStorage
         localStorage.setItem(AUTO_SAVE_KEY, JSON.stringify(flowData));
         setAutoSaveStatus('saved');
         
@@ -512,6 +574,11 @@ function FlowCanvas() {
         }, 2000);
         
         console.log('Auto-saved diagram to localStorage');
+        
+        // Also save to database if enabled
+        if (dbAutoSaveEnabled) {
+          await saveDiagramToDatabase(flowData);
+        }
       } catch (error) {
         console.error('Error auto-saving diagram:', error);
         setAutoSaveStatus('idle');
@@ -524,7 +591,7 @@ function FlowCanvas() {
         clearTimeout(autoSaveTimerRef.current);
       }
     };
-  }, [nodes, edges]);
+  }, [nodes, edges, dbAutoSaveEnabled, saveDiagramToDatabase]);
 
   // Export canvas to PDF
   const exportToPDF = useCallback(async () => {
@@ -1261,12 +1328,100 @@ function FlowCanvas() {
                   color: autoSaveStatus === 'saved' ? '#155724' : autoSaveStatus === 'saving' ? '#856404' : '#666',
                   marginBottom: '2px'
                 }}>
-                  {autoSaveStatus === 'saved' ? 'Auto-saved' : autoSaveStatus === 'saving' ? 'Saving...' : 'Auto-save active'}
+                  {autoSaveStatus === 'saved' ? 'Auto-saved (Local)' : autoSaveStatus === 'saving' ? 'Saving...' : 'Local Auto-save'}
                 </div>
                 <div style={{ fontSize: '11px', color: '#666', lineHeight: '1.3' }}>
-                  {autoSaveStatus === 'saved' ? 'Changes saved automatically' : autoSaveStatus === 'saving' ? 'Saving your changes' : 'Changes will be saved automatically'}
+                  {autoSaveStatus === 'saved' ? 'Saved to browser storage' : autoSaveStatus === 'saving' ? 'Saving to browser' : 'Browser storage active'}
                 </div>
               </div>
+            </div>
+
+            {/* Database Auto-save Toggle and Status */}
+            <div style={{ marginTop: '15px' }}>
+              <label style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                padding: '12px',
+                backgroundColor: '#f8f9fa',
+                borderRadius: '8px',
+                border: '2px solid #e0e0e0',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#e9ecef';
+                e.currentTarget.style.borderColor = '#1E93AB';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#f8f9fa';
+                e.currentTarget.style.borderColor = '#e0e0e0';
+              }}
+              >
+                <input
+                  type="checkbox"
+                  checked={dbAutoSaveEnabled}
+                  onChange={(e) => setDbAutoSaveEnabled(e.target.checked)}
+                  style={{ 
+                    cursor: 'pointer',
+                    width: '18px',
+                    height: '18px',
+                  }}
+                />
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: '13px', fontWeight: '600', color: '#333' }}>
+                    Database Auto-save
+                  </div>
+                  <div style={{ fontSize: '11px', color: '#666', lineHeight: '1.3' }}>
+                    Save to backend database
+                  </div>
+                </div>
+              </label>
+
+              {/* Database Save Status */}
+              {dbAutoSaveEnabled && (
+                <div style={{
+                  marginTop: '8px',
+                  padding: '10px',
+                  backgroundColor: dbAutoSaveStatus === 'saved' ? '#d4edda' : 
+                                  dbAutoSaveStatus === 'saving' ? '#fff3cd' : 
+                                  dbAutoSaveStatus === 'error' ? '#f8d7da' : '#f8f9fa',
+                  borderRadius: '8px',
+                  border: `2px solid ${
+                    dbAutoSaveStatus === 'saved' ? '#28a745' : 
+                    dbAutoSaveStatus === 'saving' ? '#ffc107' : 
+                    dbAutoSaveStatus === 'error' ? '#dc3545' : '#e0e0e0'
+                  }`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  transition: 'all 0.3s ease',
+                }}>
+                  <span style={{ fontSize: '18px' }}>
+                    {dbAutoSaveStatus === 'saved' ? '✅' : 
+                     dbAutoSaveStatus === 'saving' ? '⏳' : 
+                     dbAutoSaveStatus === 'error' ? '❌' : '🗄️'}
+                  </span>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ 
+                      fontSize: '12px', 
+                      fontWeight: '600', 
+                      color: dbAutoSaveStatus === 'saved' ? '#155724' : 
+                             dbAutoSaveStatus === 'saving' ? '#856404' : 
+                             dbAutoSaveStatus === 'error' ? '#721c24' : '#666',
+                    }}>
+                      {dbAutoSaveStatus === 'saved' ? 'Saved to DB' : 
+                       dbAutoSaveStatus === 'saving' ? 'Saving to DB...' : 
+                       dbAutoSaveStatus === 'error' ? 'DB Save Failed' : 'DB Ready'}
+                    </div>
+                    {diagramId && (
+                      <div style={{ fontSize: '10px', color: '#666', marginTop: '2px' }}>
+                        ID: {diagramId.substring(0, 8)}...
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
