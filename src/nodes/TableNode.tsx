@@ -20,23 +20,23 @@ function TableNode({ data }: NodeProps<TableNodeData>) {
   return (
     <div 
       style={{ 
-        background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
-        border: '2px solid #6c5ce7',
+        background: 'linear-gradient(135deg, #ffffff 0%, #F3F2EC 100%)',
+        border: '2px solid #1E93AB',
         borderRadius: '8px',
         minWidth: '250px',
-        boxShadow: '0 4px 12px rgba(108, 92, 231, 0.2)',
+        boxShadow: '0 4px 12px rgba(30, 147, 171, 0.2)',
         overflow: 'hidden',
       }}
     >
       {/* Table Header */}
       <div
         style={{
-          background: 'linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%)',
+          background: 'linear-gradient(135deg, #1E93AB 0%, #167589 100%)',
           color: 'white',
           padding: '12px 16px',
           fontWeight: '600',
           fontSize: '15px',
-          borderBottom: '2px solid #5f4dd1',
+          borderBottom: '2px solid #167589',
           display: 'flex',
           alignItems: 'center',
           gap: '8px',
@@ -54,12 +54,12 @@ function TableNode({ data }: NodeProps<TableNodeData>) {
             style={{
               position: 'relative',
               padding: '10px 16px',
-              borderBottom: index < data.columns.length - 1 ? '1px solid #e0e0e0' : 'none',
+              borderBottom: index < data.columns.length - 1 ? '1px solid #DCDCDC' : 'none',
               display: 'flex',
               alignItems: 'center',
               gap: '8px',
               fontSize: '13px',
-              backgroundColor: index % 2 === 0 ? '#ffffff' : '#f8f9fa',
+              backgroundColor: index % 2 === 0 ? '#ffffff' : '#F3F2EC',
               transition: 'background-color 0.2s',
             }}
           >
@@ -69,7 +69,7 @@ function TableNode({ data }: NodeProps<TableNodeData>) {
               position={Position.Left}
               id={`${column.id}-tgt`}
               style={{
-                background: '#6c5ce7',
+                background: '#1E93AB',
                 width: '10px',
                 height: '10px',
                 border: '2px solid white',
@@ -101,7 +101,7 @@ function TableNode({ data }: NodeProps<TableNodeData>) {
                     style={{ 
                       fontSize: '16px',
                       fontWeight: 'bold',
-                      color: '#4a90e2',
+                      color: '#1E93AB',
                       lineHeight: '1',
                     }}
                   >
@@ -125,7 +125,7 @@ function TableNode({ data }: NodeProps<TableNodeData>) {
               position={Position.Right}
               id={`${column.id}-src`}
               style={{
-                background: '#6c5ce7',
+                background: '#1E93AB',
                 width: '10px',
                 height: '10px',
                 border: '2px solid white',
