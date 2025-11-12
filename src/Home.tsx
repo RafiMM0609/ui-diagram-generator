@@ -441,7 +441,15 @@ function FlowCanvas() {
 
   // Handle keyboard events for deletion
   const onKeyDown = useCallback((event: KeyboardEvent) => {
-    if ((event.key === 'Delete' || event.key === 'Backspace') && !editingNodeId && !editingEdgeId && !editingTableNodeId) {
+    // Check if user is currently typing in an input field
+    const activeElement = document.activeElement;
+    const isTyping = activeElement && (
+      activeElement.tagName === 'INPUT' ||
+      activeElement.tagName === 'TEXTAREA' ||
+      activeElement.tagName === 'SELECT'
+    );
+    
+    if ((event.key === 'Delete' || event.key === 'Backspace') && !editingNodeId && !editingEdgeId && !editingTableNodeId && !isTyping) {
       deleteSelectedNodes();
       deleteSelectedEdges();
     }
