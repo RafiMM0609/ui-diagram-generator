@@ -890,7 +890,7 @@ function FlowCanvas() {
               top: '0',
               left: isSidebarVisible ? '0' : '-260px',
               width: '260px',
-              height: '100%',
+              height: '90%',
               backgroundColor: '#F3F2EC',
               borderRight: '2px solid #DCDCDC',
               padding: '20px',
