@@ -1,59 +1,68 @@
 import { useCallback, useRef } from 'react';
 import type { Node, Edge } from 'reactflow';
-import { getNodesBounds, useReactFlow } from 'reactflow';
+import { getNodesBounds, getViewportForBounds, useReactFlow } from 'reactflow';
 import { toPng } from 'html-to-image';
 import { jsPDF } from 'jspdf';
 
 // PDF Export constants
-const PDF_EXPORT_PADDING = 150;
-const PDF_FIT_VIEW_DURATION = 200;
+const PDF_EXPORT_PADDING = 50;
 const PDF_FIT_VIEW_WAIT_TIME = 300;
+const IMAGE_PIXEL_RATIO = 2;
 
 export function useFlowExport(nodes: Node[], edges: Edge[]) {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
-  const { getNodes, fitView } = useReactFlow();
+  const { getNodes } = useReactFlow();
 
   // Export canvas to PDF
   const exportToPDF = useCallback(async () => {
     try {
-      await fitView({ padding: 0.2, duration: PDF_FIT_VIEW_DURATION });
-      await new Promise(resolve => setTimeout(resolve, PDF_FIT_VIEW_WAIT_TIME + 200));
-
-      const nodesBounds = getNodesBounds(getNodes());
-      const width = nodesBounds.width + PDF_EXPORT_PADDING * 2;
-      const height = nodesBounds.height + PDF_EXPORT_PADDING * 2;
-
-      const flowElement = reactFlowWrapper.current?.querySelector('.react-flow__viewport');
+      const allNodes = getNodes();
       
-      if (!flowElement || !(flowElement instanceof HTMLElement)) {
-        console.error('React Flow viewport not found, trying main container');
-        const mainFlowElement = reactFlowWrapper.current?.querySelector('.react-flow');
-        if (!mainFlowElement || !(mainFlowElement instanceof HTMLElement)) {
-          console.error('React Flow element not found');
-          alert('Failed to find diagram element. Please try again.');
-          return;
-        }
-      }
-
-      const targetElement = reactFlowWrapper.current?.querySelector('.react-flow__viewport') || 
-                           reactFlowWrapper.current?.querySelector('.react-flow');
-      
-      if (!targetElement || !(targetElement instanceof HTMLElement)) {
-        console.error('No suitable React Flow element found');
-        alert('Failed to find diagram element. Please try again.');
+      if (allNodes.length === 0) {
+        alert('No nodes to export. Please add some nodes to the canvas first.');
         return;
       }
       
-      const dataUrl = await toPng(targetElement, {
+      const nodesBounds = getNodesBounds(allNodes);
+      
+      // Calculate dimensions with padding
+      const imageWidth = nodesBounds.width + PDF_EXPORT_PADDING * 2;
+      const imageHeight = nodesBounds.height + PDF_EXPORT_PADDING * 2;
+      
+      // Get the viewport transformation needed to fit all nodes
+      const viewport = getViewportForBounds(
+        nodesBounds,
+        imageWidth,
+        imageHeight,
+        0.5, // min zoom
+        2,   // max zoom
+        PDF_EXPORT_PADDING
+      );
+      
+      const viewportElement = reactFlowWrapper.current?.querySelector('.react-flow__viewport');
+      
+      if (!viewportElement || !(viewportElement instanceof HTMLElement)) {
+        console.error('React Flow viewport not found');
+        alert('Failed to find diagram viewport. Please try again.');
+        return;
+      }
+
+      // Store original transform
+      const originalTransform = viewportElement.style.transform;
+      
+      // Apply the calculated viewport transform temporarily
+      viewportElement.style.transform = `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.zoom})`;
+      
+      // Wait for the transform to be applied
+      await new Promise(resolve => setTimeout(resolve, PDF_FIT_VIEW_WAIT_TIME));
+
+      // Capture the image with exact dimensions
+      const dataUrl = await toPng(viewportElement, {
         backgroundColor: '#ffffff',
-        width: width,
-        height: height,
-        pixelRatio: 2,
+        width: imageWidth,
+        height: imageHeight,
+        pixelRatio: IMAGE_PIXEL_RATIO,
         cacheBust: true,
-        style: {
-          transform: 'scale(1)',
-          transformOrigin: 'top left',
-        },
         filter: (node) => {
           if (!node.classList) return true;
           
@@ -64,49 +73,60 @@ export function useFlowExport(nodes: Node[], edges: Edge[]) {
             'react-flow__attribution'
           ];
           
-          if (node.classList.contains('react-flow__background')) {
-            return true;
-          }
-          
-          if (node.classList.contains('react-flow__edge') || 
-              node.classList.contains('react-flow__edge-path') ||
-              node.classList.contains('react-flow__edge-text') ||
-              node.classList.contains('react-flow__edge-textbg')) {
-            return true;
-          }
-          
-          if (node.classList.contains('react-flow__node') ||
-              node.classList.contains('react-flow__handle')) {
-            return true;
-          }
-          
           return !exclusionClasses.some(classname => node.classList.contains(classname));
         },
       });
+      
+      // Restore original transform
+      viewportElement.style.transform = originalTransform;
 
       const pdf = new jsPDF({
-        orientation: width > height ? 'landscape' : 'portrait',
+        orientation: imageWidth > imageHeight ? 'landscape' : 'portrait',
         unit: 'px',
-        format: [width, height],
+        format: [imageWidth, imageHeight],
       });
 
       const img = new Image();
       img.src = dataUrl;
       img.onload = () => {
-        pdf.addImage(dataUrl, 'PNG', 0, 0, width, height);
+        pdf.addImage(dataUrl, 'PNG', 0, 0, imageWidth, imageHeight);
         pdf.save('diagram.pdf');
+      };
+      img.onerror = () => {
+        console.error('Error loading image for PDF');
+        alert('Failed to create PDF image. Please try again.');
       };
     } catch (error) {
       console.error('Error exporting to PDF:', error);
       alert('Failed to export diagram to PDF. Please try again.');
     }
-  }, [getNodes, fitView]);
+  }, [getNodes]);
 
   // Alternative export function as backup
   const exportToPDFAlternative = useCallback(async () => {
     try {
-      await fitView({ padding: 0.1, duration: 500 });
-      await new Promise(resolve => setTimeout(resolve, 800));
+      const allNodes = getNodes();
+      
+      if (allNodes.length === 0) {
+        alert('No nodes to export. Please add some nodes to the canvas first.');
+        return;
+      }
+      
+      const nodesBounds = getNodesBounds(allNodes);
+      
+      // Calculate dimensions with padding
+      const imageWidth = nodesBounds.width + PDF_EXPORT_PADDING * 2;
+      const imageHeight = nodesBounds.height + PDF_EXPORT_PADDING * 2;
+      
+      // Get the viewport transformation needed to fit all nodes
+      const viewport = getViewportForBounds(
+        nodesBounds,
+        imageWidth,
+        imageHeight,
+        0.5,
+        2,
+        PDF_EXPORT_PADDING
+      );
 
       const reactFlowContainer = reactFlowWrapper.current;
       
@@ -115,34 +135,56 @@ export function useFlowExport(nodes: Node[], edges: Edge[]) {
         return;
       }
 
-      const dataUrl = await toPng(reactFlowContainer, {
+      const viewportElement = reactFlowContainer.querySelector('.react-flow__viewport');
+      
+      if (!viewportElement || !(viewportElement instanceof HTMLElement)) {
+        console.error('React Flow viewport not found');
+        alert('Failed to find diagram viewport. Please try again.');
+        return;
+      }
+
+      // Store original transform
+      const originalTransform = viewportElement.style.transform;
+      
+      // Apply the calculated viewport transform temporarily
+      viewportElement.style.transform = `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.zoom})`;
+      
+      // Wait for the transform to be applied
+      await new Promise(resolve => setTimeout(resolve, PDF_FIT_VIEW_WAIT_TIME));
+
+      const dataUrl = await toPng(viewportElement, {
         backgroundColor: '#ffffff',
-        pixelRatio: 2,
+        width: imageWidth,
+        height: imageHeight,
+        pixelRatio: IMAGE_PIXEL_RATIO,
         cacheBust: true,
-        skipFonts: true,
-        style: {
-          width: reactFlowContainer.offsetWidth + 'px',
-          height: reactFlowContainer.offsetHeight + 'px',
-        }
+        skipFonts: false,
       });
+      
+      // Restore original transform
+      viewportElement.style.transform = originalTransform;
 
       const pdf = new jsPDF({
-        orientation: 'landscape',
+        orientation: imageWidth > imageHeight ? 'landscape' : 'portrait',
         unit: 'px',
-        format: [reactFlowContainer.offsetWidth, reactFlowContainer.offsetHeight],
+        format: [imageWidth, imageHeight],
       });
 
       const img = new Image();
       img.src = dataUrl;
       img.onload = () => {
-        pdf.addImage(dataUrl, 'PNG', 0, 0, reactFlowContainer.offsetWidth, reactFlowContainer.offsetHeight);
+        pdf.addImage(dataUrl, 'PNG', 0, 0, imageWidth, imageHeight);
         pdf.save('diagram-full.pdf');
+      };
+      img.onerror = () => {
+        console.error('Error loading image for PDF');
+        alert('Failed to create PDF image. Please try again.');
       };
     } catch (error) {
       console.error('Error in alternative export:', error);
       alert('Failed to export diagram. Please try again.');
     }
-  }, [fitView]);
+  }, [getNodes]);
 
   // Export canvas to JSON
   const exportToJSON = useCallback(() => {
