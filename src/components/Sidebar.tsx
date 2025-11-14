@@ -2,9 +2,6 @@ import type { AutoSaveStatus } from '../hooks/useAutoSave';
 
 interface SidebarProps {
   isSidebarVisible: boolean;
-  selectedNodeType: string;
-  setSelectedNodeType: (type: string) => void;
-  addNode: () => void;
   exportToJSON: () => void;
   importFromJSON: () => void;
   exportToPDF: () => void;
@@ -15,9 +12,6 @@ interface SidebarProps {
 
 export function Sidebar({
   isSidebarVisible,
-  selectedNodeType,
-  setSelectedNodeType,
-  addNode,
   exportToJSON,
   importFromJSON,
   exportToPDF,
@@ -49,7 +43,7 @@ export function Sidebar({
         Node Types
       </h3>
       <p style={{ margin: '0 0 15px 0', fontSize: '12px', color: '#666', lineHeight: '1.4' }}>
-        Click to select, then add to canvas
+        Drag and drop to canvas
       </p>
       
       {/* Rectangle Node */}
@@ -57,8 +51,7 @@ export function Sidebar({
         icon="📦"
         label="Rectangle"
         description="For processes"
-        isSelected={selectedNodeType === 'default'}
-        onClick={() => setSelectedNodeType('default')}
+        nodeType="default"
       />
 
       {/* Diamond Node */}
@@ -66,8 +59,7 @@ export function Sidebar({
         icon="🔷"
         label="Diamond"
         description="For decisions"
-        isSelected={selectedNodeType === 'diamond'}
-        onClick={() => setSelectedNodeType('diamond')}
+        nodeType="diamond"
       />
 
       {/* Oval Node */}
@@ -75,8 +67,7 @@ export function Sidebar({
         icon="⭕"
         label="Oval"
         description="For start/end"
-        isSelected={selectedNodeType === 'oval'}
-        onClick={() => setSelectedNodeType('oval')}
+        nodeType="oval"
       />
 
       {/* Circle Node */}
@@ -84,8 +75,7 @@ export function Sidebar({
         icon="⚫"
         label="Circle"
         description="For connectors"
-        isSelected={selectedNodeType === 'circle'}
-        onClick={() => setSelectedNodeType('circle')}
+        nodeType="circle"
       />
 
       {/* Divider for ERD Section */}
@@ -96,18 +86,7 @@ export function Sidebar({
         icon="📊"
         label="Database Table"
         description="For ERD diagrams"
-        isSelected={selectedNodeType === 'tableNode'}
-        onClick={() => setSelectedNodeType('tableNode')}
-      />
-
-      {/* Add Node Button */}
-      <ActionButton
-        onClick={addNode}
-        icon="➕"
-        label="Add to Canvas"
-        backgroundColor="#1E93AB"
-        hoverColor="#167589"
-        style={{ marginTop: '10px' }}
+        nodeType="tableNode"
       />
 
       <div style={{ borderTop: '1px solid #DCDCDC', margin: '10px 0' }}></div>
@@ -179,31 +158,44 @@ interface NodeTypeButtonProps {
   icon: string;
   label: string;
   description: string;
-  isSelected: boolean;
-  onClick: () => void;
+  nodeType: string;
 }
 
-function NodeTypeButton({ icon, label, description, isSelected, onClick }: NodeTypeButtonProps) {
+function NodeTypeButton({ icon, label, description, nodeType }: NodeTypeButtonProps) {
+  const onDragStart = (event: React.DragEvent) => {
+    event.dataTransfer.setData('application/reactflow', nodeType);
+    event.dataTransfer.effectAllowed = 'move';
+  };
+
   return (
     <div
-      onClick={onClick}
+      draggable
+      onDragStart={onDragStart}
       style={{
         padding: '14px',
-        backgroundColor: isSelected ? '#1E93AB' : 'white',
-        border: isSelected ? '2px solid #1E93AB' : '2px solid #DCDCDC',
+        backgroundColor: 'white',
+        border: '2px solid #DCDCDC',
         borderRadius: '8px',
-        cursor: 'pointer',
+        cursor: 'grab',
         transition: 'all 0.2s',
-        boxShadow: isSelected ? '0 4px 8px rgba(30, 147, 171, 0.3)' : '0 2px 4px rgba(0,0,0,0.1)',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
         display: 'flex',
         alignItems: 'center',
         gap: '12px',
       }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.transform = 'translateY(-2px)';
+        e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = 'translateY(0)';
+        e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+      }}
     >
       <div style={{ fontSize: '28px', lineHeight: '1', flexShrink: 0 }}>{icon}</div>
       <div style={{ flex: 1 }}>
-        <div style={{ fontSize: '14px', fontWeight: '600', marginBottom: '4px', color: isSelected ? 'white' : '#333' }}>{label}</div>
-        <div style={{ fontSize: '11px', color: isSelected ? 'rgba(255,255,255,0.9)' : '#666', lineHeight: '1.3' }}>{description}</div>
+        <div style={{ fontSize: '14px', fontWeight: '600', marginBottom: '4px', color: '#333' }}>{label}</div>
+        <div style={{ fontSize: '11px', color: '#666', lineHeight: '1.3' }}>{description}</div>
       </div>
     </div>
   );

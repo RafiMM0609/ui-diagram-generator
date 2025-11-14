@@ -7,6 +7,7 @@ import ReactFlow, {
   Controls,
   Background,
   MiniMap,
+  useReactFlow,
   type Node, 
   type Edge,
   type Connection,
@@ -29,10 +30,6 @@ import {
   SidebarToggleButton,
   LoadingScreen,
 } from './components';
-
-// Constants for node positioning
-const NODE_POSITION_RANGE = 400;
-const NODE_POSITION_OFFSET = 100;
 
 const initialNodes: Node[] = [
   { id: '1', type: 'oval', position: { x: 300, y: 50 }, data: { label: 'Start' } },
@@ -143,7 +140,6 @@ function FlowCanvas() {
   const [nodeIdCounter, setNodeIdCounter] = useState(initialNodes.length + 1);
   const [editingNodeId, setEditingNodeId] = useState<string | null>(null);
   const [editingLabel, setEditingLabel] = useState("");
-  const [selectedNodeType, setSelectedNodeType] = useState<string>('default');
   const [editingNodeType, setEditingNodeType] = useState<string>('default');
   const [editingEdgeId, setEditingEdgeId] = useState<string | null>(null);
   const [editingEdgeLabel, setEditingEdgeLabel] = useState("");
@@ -168,6 +164,9 @@ function FlowCanvas() {
   // Custom hooks
   const { autoSaveStatus, setAutoSaveStatus, clearAutoSave, AUTO_SAVE_KEY } = useAutoSave(nodes, edges);
   const { reactFlowWrapper, exportToPDF, exportToPDFAlternative, exportToJSON, importFromJSON } = useFlowExport(nodes, edges);
+  
+  // ReactFlow instance for coordinate conversion
+  const { screenToFlowPosition } = useReactFlow();
 
   // Define custom node types
   const nodeTypes = useMemo(() => ({
@@ -207,35 +206,59 @@ function FlowCanvas() {
     [setEdges]
   );
 
-  // Add a new node
-  const addNode = useCallback(() => {
-    let nodeData;
-    
-    if (selectedNodeType === 'tableNode') {
-      nodeData = {
-        tableName: `table_${nodeIdCounter}`,
-        columns: [
-          { id: `col-${nodeIdCounter}-1`, name: 'id', type: 'INT', isPK: true, isFK: false },
-          { id: `col-${nodeIdCounter}-2`, name: 'name', type: 'VARCHAR', isPK: false, isFK: false },
-          { id: `col-${nodeIdCounter}-3`, name: 'created_at', type: 'TIMESTAMP', isPK: false, isFK: false },
-        ]
-      };
-    } else {
-      nodeData = { label: `Node ${nodeIdCounter}` };
-    }
+  // Handle drag over to allow drop
+  const onDragOver = useCallback((event: React.DragEvent) => {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+  }, []);
 
-    const newNode: Node = {
-      id: nodeIdCounter.toString(),
-      type: selectedNodeType,
-      position: { 
-        x: Math.random() * NODE_POSITION_RANGE + NODE_POSITION_OFFSET, 
-        y: Math.random() * NODE_POSITION_RANGE + NODE_POSITION_OFFSET 
-      },
-      data: nodeData,
-    };
-    setNodes((nds) => [...nds, newNode]);
-    setNodeIdCounter((id) => id + 1);
-  }, [nodeIdCounter, selectedNodeType, setNodes]);
+  // Handle drop to add node at the drop position
+  const onDrop = useCallback(
+    (event: React.DragEvent) => {
+      event.preventDefault();
+
+      const type = event.dataTransfer.getData('application/reactflow');
+      
+      // Check if a valid node type was dragged
+      if (!type) {
+        return;
+      }
+
+      // Get the drop position in flow coordinates
+      const position = screenToFlowPosition({
+        x: event.clientX,
+        y: event.clientY,
+      });
+
+      // Create node data based on type
+      let nodeData;
+      if (type === 'tableNode') {
+        nodeData = {
+          tableName: `table_${nodeIdCounter}`,
+          columns: [
+            { id: `col-${nodeIdCounter}-1`, name: 'id', type: 'INT', isPK: true, isFK: false },
+            { id: `col-${nodeIdCounter}-2`, name: 'name', type: 'VARCHAR', isPK: false, isFK: false },
+            { id: `col-${nodeIdCounter}-3`, name: 'created_at', type: 'TIMESTAMP', isPK: false, isFK: false },
+          ]
+        };
+      } else {
+        nodeData = { label: `Node ${nodeIdCounter}` };
+      }
+
+      // Create the new node
+      const newNode: Node = {
+        id: nodeIdCounter.toString(),
+        type,
+        position,
+        data: nodeData,
+      };
+
+      // Add the new node to the canvas
+      setNodes((nds) => [...nds, newNode]);
+      setNodeIdCounter((id) => id + 1);
+    },
+    [screenToFlowPosition, nodeIdCounter, setNodes]
+  );
 
   // Handle node double-click to edit label
   const onNodeDoubleClick = useCallback((_event: React.MouseEvent, node: Node) => {
@@ -559,6 +582,8 @@ function FlowCanvas() {
             onNodeDoubleClick={onNodeDoubleClick}
             onEdgeDoubleClick={onEdgeDoubleClick}
             onSelectionChange={onSelectionChange}
+            onDrop={onDrop}
+            onDragOver={onDragOver}
             nodeTypes={nodeTypes}
             edgeTypes={edgeTypes}
             defaultEdgeOptions={defaultEdgeOptions}
@@ -571,9 +596,6 @@ function FlowCanvas() {
           
           <Sidebar
             isSidebarVisible={isSidebarVisible}
-            selectedNodeType={selectedNodeType}
-            setSelectedNodeType={setSelectedNodeType}
-            addNode={addNode}
             exportToJSON={exportToJSON}
             importFromJSON={handleImportJSON}
             exportToPDF={exportToPDF}
