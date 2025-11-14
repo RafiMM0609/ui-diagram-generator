@@ -31,10 +31,6 @@ import {
   LoadingScreen,
 } from './components';
 
-// Constants for node positioning
-const NODE_POSITION_RANGE = 400;
-const NODE_POSITION_OFFSET = 100;
-
 const initialNodes: Node[] = [
   { id: '1', type: 'oval', position: { x: 300, y: 50 }, data: { label: 'Start' } },
   { id: '2', type: 'default', position: { x: 300, y: 180 }, data: { label: 'Input Data' }, style: { background: 'linear-gradient(135deg, #ffffff 0%, #F3F2EC 100%)', border: '2px solid #1E93AB', padding: '12px 20px', borderRadius: '8px', fontWeight: '500', boxShadow: '0 4px 12px rgba(30, 147, 171, 0.2)' } },
@@ -144,7 +140,6 @@ function FlowCanvas() {
   const [nodeIdCounter, setNodeIdCounter] = useState(initialNodes.length + 1);
   const [editingNodeId, setEditingNodeId] = useState<string | null>(null);
   const [editingLabel, setEditingLabel] = useState("");
-  const [selectedNodeType, setSelectedNodeType] = useState<string>('default');
   const [editingNodeType, setEditingNodeType] = useState<string>('default');
   const [editingEdgeId, setEditingEdgeId] = useState<string | null>(null);
   const [editingEdgeLabel, setEditingEdgeLabel] = useState("");
@@ -210,36 +205,6 @@ function FlowCanvas() {
     }, eds)),
     [setEdges]
   );
-
-  // Add a new node
-  const addNode = useCallback(() => {
-    let nodeData;
-    
-    if (selectedNodeType === 'tableNode') {
-      nodeData = {
-        tableName: `table_${nodeIdCounter}`,
-        columns: [
-          { id: `col-${nodeIdCounter}-1`, name: 'id', type: 'INT', isPK: true, isFK: false },
-          { id: `col-${nodeIdCounter}-2`, name: 'name', type: 'VARCHAR', isPK: false, isFK: false },
-          { id: `col-${nodeIdCounter}-3`, name: 'created_at', type: 'TIMESTAMP', isPK: false, isFK: false },
-        ]
-      };
-    } else {
-      nodeData = { label: `Node ${nodeIdCounter}` };
-    }
-
-    const newNode: Node = {
-      id: nodeIdCounter.toString(),
-      type: selectedNodeType,
-      position: { 
-        x: Math.random() * NODE_POSITION_RANGE + NODE_POSITION_OFFSET, 
-        y: Math.random() * NODE_POSITION_RANGE + NODE_POSITION_OFFSET 
-      },
-      data: nodeData,
-    };
-    setNodes((nds) => [...nds, newNode]);
-    setNodeIdCounter((id) => id + 1);
-  }, [nodeIdCounter, selectedNodeType, setNodes]);
 
   // Handle drag over to allow drop
   const onDragOver = useCallback((event: React.DragEvent) => {
@@ -631,9 +596,6 @@ function FlowCanvas() {
           
           <Sidebar
             isSidebarVisible={isSidebarVisible}
-            selectedNodeType={selectedNodeType}
-            setSelectedNodeType={setSelectedNodeType}
-            addNode={addNode}
             exportToJSON={exportToJSON}
             importFromJSON={handleImportJSON}
             exportToPDF={exportToPDF}
