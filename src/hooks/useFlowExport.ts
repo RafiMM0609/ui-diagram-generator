@@ -5,9 +5,9 @@ import { toPng } from 'html-to-image';
 import { jsPDF } from 'jspdf';
 
 // PDF Export constants
-const PDF_EXPORT_PADDING = 50;
+const PDF_EXPORT_PADDING = 20;
 const PDF_FIT_VIEW_WAIT_TIME = 300;
-const IMAGE_PIXEL_RATIO = 2;
+const IMAGE_PIXEL_RATIO = 0.8;
 
 export function useFlowExport(nodes: Node[], edges: Edge[]) {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
@@ -36,7 +36,7 @@ export function useFlowExport(nodes: Node[], edges: Edge[]) {
         imageHeight,
         0.5, // min zoom
         2,   // max zoom
-        PDF_EXPORT_PADDING
+        0
       );
       
       const viewportElement = reactFlowWrapper.current?.querySelector('.react-flow__viewport');
