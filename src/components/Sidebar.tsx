@@ -49,7 +49,7 @@ export function Sidebar({
         Node Types
       </h3>
       <p style={{ margin: '0 0 15px 0', fontSize: '12px', color: '#666', lineHeight: '1.4' }}>
-        Click to select, then add to canvas
+        Drag and drop to canvas or click to select
       </p>
       
       {/* Rectangle Node */}
@@ -59,6 +59,7 @@ export function Sidebar({
         description="For processes"
         isSelected={selectedNodeType === 'default'}
         onClick={() => setSelectedNodeType('default')}
+        nodeType="default"
       />
 
       {/* Diamond Node */}
@@ -68,6 +69,7 @@ export function Sidebar({
         description="For decisions"
         isSelected={selectedNodeType === 'diamond'}
         onClick={() => setSelectedNodeType('diamond')}
+        nodeType="diamond"
       />
 
       {/* Oval Node */}
@@ -77,6 +79,7 @@ export function Sidebar({
         description="For start/end"
         isSelected={selectedNodeType === 'oval'}
         onClick={() => setSelectedNodeType('oval')}
+        nodeType="oval"
       />
 
       {/* Circle Node */}
@@ -86,6 +89,7 @@ export function Sidebar({
         description="For connectors"
         isSelected={selectedNodeType === 'circle'}
         onClick={() => setSelectedNodeType('circle')}
+        nodeType="circle"
       />
 
       {/* Divider for ERD Section */}
@@ -98,6 +102,7 @@ export function Sidebar({
         description="For ERD diagrams"
         isSelected={selectedNodeType === 'tableNode'}
         onClick={() => setSelectedNodeType('tableNode')}
+        nodeType="tableNode"
       />
 
       {/* Add Node Button */}
@@ -181,18 +186,26 @@ interface NodeTypeButtonProps {
   description: string;
   isSelected: boolean;
   onClick: () => void;
+  nodeType: string;
 }
 
-function NodeTypeButton({ icon, label, description, isSelected, onClick }: NodeTypeButtonProps) {
+function NodeTypeButton({ icon, label, description, isSelected, onClick, nodeType }: NodeTypeButtonProps) {
+  const onDragStart = (event: React.DragEvent) => {
+    event.dataTransfer.setData('application/reactflow', nodeType);
+    event.dataTransfer.effectAllowed = 'move';
+  };
+
   return (
     <div
       onClick={onClick}
+      draggable
+      onDragStart={onDragStart}
       style={{
         padding: '14px',
         backgroundColor: isSelected ? '#1E93AB' : 'white',
         border: isSelected ? '2px solid #1E93AB' : '2px solid #DCDCDC',
         borderRadius: '8px',
-        cursor: 'pointer',
+        cursor: 'grab',
         transition: 'all 0.2s',
         boxShadow: isSelected ? '0 4px 8px rgba(30, 147, 171, 0.3)' : '0 2px 4px rgba(0,0,0,0.1)',
         display: 'flex',
